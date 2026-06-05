@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Attendance</h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-calendar-alt me-2"></i>
+                {{ today|date:"l, F j, Y" }}
+            </p>
+        </div>
+
+        <div>
+            <a href="{% url 'attendance:daily_report' %}" class="btn btn-outline-primary">
+                <i class="fas fa-chart-bar me-1"></i> Attendance Report
+            </a>
+        </div>
+    </div>
+
+
+    <!-- FACE RECOGNITION CAMERA -->
+    <div class="card mb-4">
+
+        <div class="card-header">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-camera me-2"></i>Face Recognition Attendance
+            </h5>
+        </div>
+
+        <div class="card-body text-center">
+
+            <video id="video" width="500" height="350" autoplay class="border rounded"></video>
+            <canvas id="canvas" style="display:none;"></canvas>
+
+            <br><br>
+
+            <select id="courseSelect" class="form-select w-25 mx-auto">
+                <option value="">Select Course</option>
+                {% for course in courses %}
+                <option value="{{ course.id }}">{{ course.course_code }}</option>
+                {% endfor %}
+            </select>
+
+            <br>
+
+            <button class="btn btn-success" onclick="captureFace()">
+                <i class="fas fa-camera me-1"></i>
+                Mark Attendance
+            </button>
+
+        </div>
+    </div>
+
+
+    <!-- ATTENDANCE TABLE -->
+    <div class="card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Attendance Records</h5>
+            <span class="badge bg-primary" id="recordCount">{{ attendance_records|length }} records</span>
+        </div>
+
+        <div class="card-body p-0">
+
+            <div class="table-responsive">
+
+                <table class="table table-hover mb-0">
+
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student</th>
+                            <th>Student ID</th>
+                            <th>Time In</th>
+                            <th>Course</th>
+                            <th>Status</th>
+                            <th>Confidence</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="attendanceTableBody">
+
+                        {% for record in attendance_records %}
+
+                        <tr>
+                            <td>{{ record.student.get_full_name }}</td>
+
+                            <td>{{ record.student.student_id }}</td>
+
+                            <td>{{ record.time_in|time:"h:i A" }}</td>
+
+                            <td>{{ record.course.course_code }}</td>
+
+                            <td>
+
+                                {% if record.status == 'present' %}
+                                <span class="badge bg-success">Present</span>
+                                {% elif record.status == 'late' %}
+                                <span class="badge bg-warning">Late</span>
+                                {% else %}
+                                <span class="badge bg-danger">Absent</span>
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+
+                                {% if record.confidence_score %}
+                                {{ record.confidence_score|floatformat:1 }}%
+                                {% else %}
+                                Manual
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                No attendance records today
+                            </td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+
+
+{% block extra_js %}
+
+<script>
+
+    function getCookie(name) {
+
+        let cookieValue = null;
+
+        if (document.cookie && document.cookie !== '') {
+
+            const cookies = document.cookie.split(';');
+
+            for (let i = 0; i < cookies.length; i++) {
+
+                const cookie = cookies[i].trim();
+
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+
+                    break;
+
+                }
+
+            }
+
+        }
+
+        return cookieValue;
+
+    }
+
+    const csrfToken = getCookie('csrftoken');
+
+    const video = document.getElementById("video");
+
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+
+        .then(stream => {
+
+            video.srcObject = stream;
+
+        })
+
+        .catch(err => console.log("Camera error:", err));
+
+
+
+    function captureFace() {
+
+        const canvas = document.getElementById("canvas");
+
+        const context = canvas.getContext("2d");
+
+        canvas.width = video.videoWidth;
+
+        canvas.height = video.videoHeight;
+
+        context.drawImage(video, 0, 0);
+
+        const image = canvas.toDataURL("image/jpeg");
+
+        const course_id = document.getElementById("courseSelect").value;
+
+        if (!course_id) {
+
+            alert("Please select course");
+
+            return;
+
+        }
+
+
+        fetch("{% url 'face_app:mark_attendance_api' %}", {
+
+            method: "POST",
+
+            headers: {
+
+                "Content-Type": "application/json",
+
+                "X-CSRFToken": csrfToken
+
+            },
+
+            body: JSON.stringify({
+
+                image: image,
+
+                course_id: course_id
+
+            })
+
+        })
+
+            .then(res => res.json())
+
+            .then(data => {
+
+                if (data.success) {
+
+                    alert("Attendance marked for " + data.user_name);
+
+                    location.reload();
+
+                }
+
+                else {
+
+                    alert(data.error);
+
+                }
+
+            });
+
+    }
+
+</script>
+
+{% endblock %}

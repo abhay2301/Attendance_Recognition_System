@@ -1,0 +1,456 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Face - Face Recognition Attendance System{% endblock %}
+
+{% block page_title %}Register Your Face{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Register Face</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .capture-stage {
+        border: 3px solid #dee2e6;
+        border-radius: 10px;
+        padding: 20px;
+        background: #f8f9fa;
+    }
+    .face-preview {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #4361ee;
+        margin: 10px;
+    }
+    .capture-box {
+        width: 300px;
+        height: 300px;
+        border: 3px dashed #4361ee;
+        border-radius: 10px;
+        margin: 0 auto;
+        overflow: hidden;
+        position: relative;
+    }
+    .capture-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+    }
+    .instruction-step {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid #4361ee;
+    }
+    .step-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        background: #4361ee;
+        color: white;
+        border-radius: 50%;
+        margin-right: 10px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if user.is_face_registered %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-check-circle fa-5x text-success mb-4"></i>
+                <h3>Face Already Registered!</h3>
+                <p class="text-muted">Your face has been successfully registered in our system.</p>
+                <div class="mt-4">
+                    <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Face Registration</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <h4>Step <span id="current-step">1</span> of 3</h4>
+                    <div class="progress" style="height: 10px;">
+                        <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 33%"></div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Instructions -->
+                <div id="step-1" class="step-content">
+                    <div class="instruction-step">
+                        <h5><span class="step-number">1</span> Prepare Yourself</h5>
+                        <p>Make sure you're in a well-lit area and your face is clearly visible.</p>
+                        <ul>
+                            <li>Remove glasses, hats, or face coverings</li>
+                            <li>Ensure good lighting on your face</li>
+                            <li>Look directly at the camera</li>
+                            <li>Keep a neutral facial expression</li>
+                        </ul>
+                    </div>
+
+                    <div class="instruction-step">
+                        <h5><span class="step-number">2</span> Capture Process</h5>
+                        <p>We'll capture multiple images from different angles for better accuracy.</p>
+                        <ul>
+                            <li>Front-facing view (3 images)</li>
+                            <li>Slight left turn (2 images)</li>
+                            <li>Slight right turn (2 images)</li>
+                        </ul>
+                    </div>
+
+                    <div class="instruction-step">
+                        <h5><span class="step-number">3</span> Privacy Notice</h5>
+                        <p>Your face data will be securely stored and used only for attendance purposes.</p>
+                        <div class="alert alert-info">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            We use encryption to protect your facial data and never share it with third parties.
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button id="start-registration" class="btn btn-primary btn-lg">
+                            <i class="fas fa-play me-2"></i>Start Registration
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Capture Images -->
+                <div id="step-2" class="step-content" style="display: none;">
+                    <div class="capture-stage">
+                        <div class="capture-box mb-4">
+                            <video id="registration-video" autoplay playsinline></video>
+                            <canvas id="registration-canvas" width="200" height="200" style="display: none;"></canvas>
+                            <div id="capture-overlay" class="capture-overlay">
+                                <i class="fas fa-user-circle fa-3x mb-3"></i>
+                                <p>Camera Ready</p>
+                            </div>
+                        </div>
+
+                        <div class="text-center mb-4">
+                            <h5>Capture <span id="capture-count">0</span>/7 Images</h5>
+                            <p id="capture-instruction">Look straight at the camera</p>
+                        </div>
+
+                        <div id="capture-preview" class="d-flex flex-wrap justify-content-center mb-4"></div>
+
+                        <div class="text-center">
+                            <button id="capture-image" class="btn btn-success btn-lg me-3" disabled>
+                                <i class="fas fa-camera me-2"></i>Capture Image
+                            </button>
+                            <button id="next-step" class="btn btn-primary btn-lg" style="display: none;">
+                                <i class="fas fa-arrow-right me-2"></i>Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Processing -->
+                <div id="step-3" class="step-content" style="display: none;">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary mb-4" style="width: 4rem; height: 4rem;" role="status">
+                            <span class="visually-hidden">Processing...</span>
+                        </div>
+                        <h4>Processing Face Data</h4>
+                        <p class="text-muted">Extracting facial features and creating your unique face signature...</p>
+                        <div id="processing-steps" class="mt-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Analyzing facial features</span>
+                                <span id="step-1-status"><i class="fas fa-spinner fa-spin"></i></span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Creating face encoding</span>
+                                <span id="step-2-status"><i class="fas fa-clock"></i></span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Saving to database</span>
+                                <span id="step-3-status"><i class="fas fa-clock"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Registration Tips</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <h6><i class="fas fa-lightbulb me-2"></i>Best Practices:</h6>
+                    <ul class="mb-0">
+                        <li>Natural daylight works best</li>
+                        <li>Keep background simple</li>
+                        <li>Maintain neutral expression</li>
+                        <li>Follow the on-screen prompts</li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>Avoid:</h6>
+                    <ul class="mb-0">
+                        <li>Direct sunlight behind you</li>
+                        <li>Shadows on your face</li>
+                        <li>Other people in frame</li>
+                        <li>Making exaggerated faces</li>
+                    </ul>
+                </div>
+
+                <div class="mt-4">
+                    <h6>Registration Status</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td>Face Registered:</td>
+                            <td class="text-end">
+                                {% if user.is_face_registered %}
+                                <span class="badge bg-success">Yes</span>
+                                {% else %}
+                                <span class="badge bg-danger">No</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Registration Date:</td>
+                            <td class="text-end">
+                                {% if user.is_face_registered %}
+                                {{ user.face_registration_date|date:"Y-m-d" }}
+                                {% else %}
+                                <span class="text-muted">Not registered</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Images Captured:</td>
+                            <td class="text-end">
+                                {% if user.is_face_registered %}
+                                <span class="badge bg-info">7 images</span>
+                                {% else %}
+                                <span class="text-muted">0 images</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Why Face Registration?</h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Enhanced Security:</strong> Prevents proxy attendance</p>
+                <p><strong>Quick Check-in:</strong> Just look at the camera</p>
+                <p><strong>Contactless:</strong> No physical contact needed</p>
+                <p><strong>Accurate:</strong> 99%+ recognition accuracy</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    let registrationStream = null;
+    let capturedImages = [];
+    let captureStep = 1;
+    const totalCaptures = 7;
+    const instructions = [
+        "Look straight at the camera",
+        "Keep looking straight",
+        "Slight smile please",
+        "Turn head slightly left",
+        "Turn a bit more left",
+        "Turn head slightly right",
+        "Turn a bit more right"
+    ];
+
+    // Step navigation
+    document.getElementById('start-registration').addEventListener('click', () => {
+        showStep(2);
+        startCamera();
+    });
+
+    document.getElementById('next-step').addEventListener('click', () => {
+        showStep(3);
+        processFaceData();
+    });
+
+    function showStep(step) {
+        // Hide all steps
+        document.querySelectorAll('.step-content').forEach(el => {
+            el.style.display = 'none';
+        });
+
+        // Show current step
+        document.getElementById(`step-${step}`).style.display = 'block';
+
+        // Update progress
+        document.getElementById('current-step').textContent = step;
+        const progress = (step / 3) * 100;
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+    }
+
+    // Camera functions
+    async function startCamera() {
+        try {
+            registrationStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: 300,
+                    height: 300,
+                    facingMode: 'user'
+                }
+            });
+
+            const video = document.getElementById('registration-video');
+            video.srcObject = registrationStream;
+            document.getElementById('capture-overlay').style.display = 'none';
+            document.getElementById('capture-image').disabled = false;
+
+        } catch (err) {
+            console.error('Camera error:', err);
+            alert('Error accessing camera: ' + err.message);
+        }
+    }
+
+    // Capture image
+    document.getElementById('capture-image').addEventListener('click', () => {
+        const video = document.getElementById('registration-video');
+        const canvas = document.getElementById('registration-canvas');
+        const context = canvas.getContext('2d');
+
+        // Draw video frame to canvas
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Convert canvas to data URL
+        const imageData = canvas.toDataURL('image/jpeg');
+        capturedImages.push(imageData);
+
+        // Update UI
+        document.getElementById('capture-count').textContent = capturedImages.length;
+
+        // Add preview
+        const preview = document.createElement('img');
+        preview.src = imageData;
+        preview.className = 'face-preview';
+        preview.alt = `Capture ${capturedImages.length}`;
+        document.getElementById('capture-preview').appendChild(preview);
+
+        // Update instruction
+        if (captureStep < totalCaptures) {
+            captureStep++;
+            document.getElementById('capture-instruction').textContent = instructions[captureStep - 1];
+        }
+
+        // Check if done
+        if (capturedImages.length >= totalCaptures) {
+            document.getElementById('capture-image').disabled = true;
+            document.getElementById('next-step').style.display = 'inline-block';
+            document.getElementById('capture-instruction').textContent = 'All images captured! Click Continue.';
+        }
+    });
+
+    // Process face data - send to server
+    function processFaceData() {
+        const steps = ['step-1-status', 'step-2-status', 'step-3-status'];
+
+        // Step 1: Analyzing facial features
+        document.getElementById(steps[0]).innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        // Stop camera
+        if (registrationStream) {
+            registrationStream.getTracks().forEach(track => track.stop());
+        }
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
+            || '{{ csrf_token }}';
+
+        // Send images to server
+        fetch("{% url 'face_app:face_capture' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify({ images: capturedImages })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Mark step 1 done
+            document.getElementById(steps[0]).innerHTML = '<i class="fas fa-check text-success"></i>';
+
+            setTimeout(() => {
+                // Mark step 2 done
+                document.getElementById(steps[1]).innerHTML = '<i class="fas fa-check text-success"></i>';
+
+                setTimeout(() => {
+                    // Mark step 3 done
+                    document.getElementById(steps[2]).innerHTML = '<i class="fas fa-check text-success"></i>';
+
+                    setTimeout(() => {
+                        if (data.success) {
+                            alert('Face registration completed successfully!');
+                            window.location.href = "{% url 'dashboard' %}";
+                        } else {
+                            alert('Registration failed: ' + (data.error || 'Unknown error'));
+                            showStep(2);
+                            capturedImages = [];
+                            captureStep = 1;
+                            document.getElementById('capture-preview').innerHTML = '';
+                            document.getElementById('capture-count').textContent = '0';
+                            document.getElementById('capture-instruction').textContent = instructions[0];
+                            document.getElementById('capture-image').disabled = false;
+                            document.getElementById('next-step').style.display = 'none';
+                            startCamera();
+                        }
+                    }, 500);
+                }, 500);
+            }, 500);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during registration. Please try again.');
+            showStep(2);
+            startCamera();
+        });
+    }
+
+    // Clean up camera on page unload
+    window.addEventListener('beforeunload', () => {
+        if (registrationStream) {
+            registrationStream.getTracks().forEach(track => track.stop());
+        }
+    });
+</script>
+{% endblock %}

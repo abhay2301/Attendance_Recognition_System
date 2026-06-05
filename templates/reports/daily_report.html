@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+
+{% block title %}Daily Report - Face Recognition Attendance System{% endblock %}
+
+{% block page_title %}Daily Attendance Report{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'attendance:daily_report' %}">Reports</a></li>
+<li class="breadcrumb-item active">Daily Report</li>
+{% endblock %}
+
+{% block header_actions %}
+<div class="btn-group">
+    <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">
+        <i class="fas fa-calendar-alt me-2"></i>{{ selected_date }}
+    </button>
+    <ul class="dropdown-menu">
+        <li><input type="date" class="form-control" id="date-picker"></li>
+    </ul>
+</div>
+
+<button class="btn btn-success ms-2" onclick="exportReport()">
+    <i class="fas fa-download me-2"></i>Export PDF
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card stat-card text-center py-3">
+                            <h6 class="text-muted">Total Students</h6>
+                            <h2 class="fw-bold">145</h2>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card stat-card text-center py-3">
+                            <h6 class="text-muted">Present Today</h6>
+                            <h2 class="fw-bold text-success">132</h2>
+                            <small>90.3%</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card stat-card text-center py-3">
+                            <h6 class="text-muted">Absent Today</h6>
+                            <h2 class="fw-bold text-danger">8</h2>
+                            <small>5.5%</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="card stat-card text-center py-3">
+                            <h6 class="text-muted">Late Arrivals</h6>
+                            <h2 class="fw-bold text-warning">5</h2>
+                            <small>3.4%</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Today's Attendance Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="daily-report-table">
+                        <thead>
+                            <tr>
+                                <th>Student ID</th>
+                                <th>Name</th>
+                                <th>Course</th>
+                                <th>Time In</th>
+                                <th>Time Out</th>
+                                <th>Status</th>
+                                <th>Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in daily_records %}
+                            <tr>
+                                <td>{{ record.student.student_id }}</td>
+                                <td>
+                                    <strong>{{ record.student.get_full_name }}</strong><br>
+                                    <small class="text-muted">{{ record.student.department }}</small>
+                                </td>
+                                <td>{{ record.course.course_code }}</td>
+                                <td>{{ record.time_in|time:"H:i:s" }}</td>
+                                <td>
+                                    {% if record.time_out %}
+                                    {{ record.time_out|time:"H:i:s" }}
+                                    {% else %}
+                                    <span class="text-muted">--:--:--</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.status == 'present' %}
+                                    <span class="badge bg-success">Present</span>
+                                    {% elif record.status == 'absent' %}
+                                    <span class="badge bg-danger">Absent</span>
+                                    {% elif record.status == 'late' %}
+                                    <span class="badge bg-warning">Late</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ record.confidence_score|default:"N/A" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-5">
+                                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                    <h5>No attendance records for today</h5>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Attendance Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="dailyChart" height="250"></canvas>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Course-wise Attendance</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Course</th>
+                            <th class="text-end">Present</th>
+                            <th class="text-end">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>CS101</td>
+                            <td class="text-end">45/48</td>
+                            <td class="text-end"><span class="badge bg-success">93.8%</span></td>
+                        </tr>
+                        <tr>
+                            <td>MA202</td>
+                            <td class="text-end">38/42</td>
+                            <td class="text-end"><span class="badge bg-success">90.5%</span></td>
+                        </tr>
+                        <tr>
+                            <td>PHY301</td>
+                            <td class="text-end">49/55</td>
+                            <td class="text-end"><span class="badge bg-warning">89.1%</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Absent Students</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for absent in absent_students %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ absent.student.get_full_name }}</h6>
+                                <small class="text-muted">{{ absent.course.course_code }}</small>
+                            </div>
+                            <span class="badge bg-danger">Absent</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <p class="text-muted mb-0">No absent students today!</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Key Observations:</h6>
+                        <ul>
+                            <li>Overall attendance rate: <strong>90.3%</strong></li>
+                            <li>Best attendance: <strong>CS101 (93.8%)</strong></li>
+                            <li>Most absences: <strong>PHY301 (6 students)</strong></li>
+                            <li>Peak check-in time: <strong>10:00 AM</strong></li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Recommendations:</h6>
+                        <ul>
+                            <li>Follow up with absent students</li>
+                            <li>Check camera alignment in Room 302</li>
+                            <li>Review late arrival patterns</li>
+                            <li>Send attendance report to department</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Date picker
+    document.getElementById('date-picker').addEventListener('change', function() {
+        const selectedDate = this.value;
+        // In real app, reload page with selected date
+        window.location.href = `?date=${selectedDate}`;
+    });
+    
+    // Daily chart
+    const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+    const dailyChart = new Chart(dailyCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Present', 'Absent', 'Late'],
+            datasets: [{
+                data: [132, 8, 5],
+                backgroundColor: [
+                    '#4caf50',
+                    '#f44336',
+                    '#ff9800'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // Export function
+    function exportReport() {
+        // In real app, generate and download PDF
+        alert('Report exported as PDF!');
+    }
+</script>
+{% endblock %}

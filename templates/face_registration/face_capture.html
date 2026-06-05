@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Face Capture - Face Recognition Attendance System{% endblock %}
+
+{% block page_title %}Face Capture{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'register_face' %}">Face Registration</a></li>
+<li class="breadcrumb-item active">Capture</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Capture Your Face</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This is the face capture page. It will be integrated with the camera for actual face capture.
+                </div>
+                
+                <div class="my-4">
+                    <i class="fas fa-camera fa-5x text-primary"></i>
+                </div>
+                
+                <p class="text-muted mb-4">
+                    This page will capture multiple images of your face from different angles for better recognition accuracy.
+                </p>
+                
+                <div class="d-grid gap-2 col-md-6 mx-auto">
+                    <a href="{% url 'register_face' %}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Registration
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

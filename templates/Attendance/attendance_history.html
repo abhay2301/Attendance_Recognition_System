@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance History - Face Recognition Attendance System{% endblock %}
+
+{% block page_title %}Attendance History{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'view_attendance' %}">Attendance</a></li>
+<li class="breadcrumb-item active">History</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Detailed Attendance History</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This page shows detailed attendance history. Data will be populated when you start marking attendance.
+                </div>
+                
+                <div class="text-center py-5">
+                    <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                    <h5>No Attendance History Yet</h5>
+                    <p class="text-muted">Start marking attendance to see your history here.</p>
+                    <a href="{% url 'mark_attendance' %}" class="btn btn-primary">
+                        <i class="fas fa-camera me-2"></i>Mark Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

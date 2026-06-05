@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Face Recognition Attendance System{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row align-items-center">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold mb-4">Welcome to <span class="text-primary">FaceAttend</span></h1>
+            <p class="lead mb-4">
+                Revolutionize your attendance tracking with our AI-powered face recognition system. 
+                No more manual entries, no more proxy attendance - just smart, automated tracking.
+            </p>
+            <div class="d-grid gap-3 d-md-flex">
+                {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="btn btn-primary btn-lg px-4">
+                    <i class="fas fa-tachometer-alt me-2"></i>Go to Dashboard
+                </a>
+                {% else %}
+                <a href="{% url 'login' %}" class="btn btn-primary btn-lg px-4">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+                <a href="{% url 'register' %}" class="btn btn-outline-primary btn-lg px-4">
+                    <i class="fas fa-user-plus me-2"></i>Register
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                 class="img-fluid rounded shadow" alt="Face Recognition">
+        </div>
+    </div>
+
+    <div class="row mt-5 pt-5">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="icon-wrapper mb-3">
+                        <i class="fas fa-camera fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Face Recognition</h4>
+                    <p class="card-text">Advanced facial recognition technology for accurate attendance marking.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="icon-wrapper mb-3">
+                        <i class="fas fa-chart-line fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Real-time Reports</h4>
+                    <p class="card-text">Generate detailed attendance reports with analytics and insights.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center p-4">
+                <div class="card-body">
+                    <div class="icon-wrapper mb-3">
+                        <i class="fas fa-shield-alt fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="card-title">Secure & Reliable</h4>
+                    <p class="card-text">Bank-level security to protect your data and prevent fraud.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
