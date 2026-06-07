@@ -42,9 +42,13 @@ def register_face_view(request):
 def mark_attendance_view(request):
     """Mark attendance page"""
     courses = Course.objects.filter(is_active=True)
+    students = CustomUser.objects.filter(
+    user_type='student'
+    )
     context = {
         'title': 'Mark Attendance',
         'courses': courses,
+        'students': students,
         'user': request.user
     }
     return render(request, 'face_recognition/mark_attendance.html', context)

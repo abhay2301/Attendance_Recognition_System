@@ -16,10 +16,18 @@
             </p>
         </div>
 
-        <div>
+        <div class="d-flex gap-2">
             <a href="{% url 'attendance:daily_report' %}" class="btn btn-outline-primary">
-                <i class="fas fa-chart-bar me-1"></i> Attendance Report
+        <i class="fas fa-chart-bar me-1"></i> Attendance Report
             </a>
+
+            <button
+                class="btn btn-success"
+                data-bs-toggle="modal"
+                data-bs-target="#registerFaceModal">
+                <i class="fas fa-user-plus me-1"></i>
+                Register Student Face
+            </button>
         </div>
     </div>
 
@@ -137,6 +145,59 @@
     </div>
 
 </div>
+
+<div class="modal fade" id="registerFaceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Register Student Face</h5>
+
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+    <label class="form-label">Select Student</label>
+
+    <select id="studentSelect" class="form-select">
+        <option value="">Select Student</option>
+
+        {% for student in students %}
+        <option value="{{ student.id }}">
+            {{ student.student_id }} - {{ student.get_full_name }}
+        </option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="text-center">
+    <video id="registerVideo"
+           width="350"
+           height="250"
+           autoplay
+           class="border rounded">
+    </video>
+
+    <canvas id="registerCanvas" style="display:none;"></canvas>
+</div>
+
+<div class="text-center mt-3">
+    <button class="btn btn-primary"
+            onclick="registerStudentFace()">
+        Capture & Save Face
+    </button>
+</div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 
@@ -144,6 +205,93 @@
 {% block extra_js %}
 
 <script>
+
+    let registerStream = null;
+
+const registerModal = document.getElementById('registerFaceModal');
+
+registerModal.addEventListener('shown.bs.modal', async () => {
+
+    try {
+
+        registerStream = await navigator.mediaDevices.getUserMedia({
+            video: true
+        });
+
+        document.getElementById('registerVideo').srcObject = registerStream;
+
+    }
+    catch(err){
+        console.log(err);
+        alert("Cannot access camera");
+    }
+
+});
+
+registerModal.addEventListener('hidden.bs.modal', () => {
+
+    if(registerStream){
+        registerStream.getTracks().forEach(track => track.stop());
+    }
+
+});
+
+    function registerStudentFace() {
+
+    const studentId = document.getElementById('studentSelect').value;
+
+    if(!studentId){
+        alert("Please select a student");
+        return;
+    }
+
+    const video = document.getElementById("registerVideo");
+    const canvas = document.getElementById("registerCanvas");
+
+    const context = canvas.getContext("2d");
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    context.drawImage(video, 0, 0);
+
+    const image = canvas.toDataURL("image/jpeg");
+
+    fetch("/face/register-face-attendance/", {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken
+        },
+
+        body: JSON.stringify({
+            user_id: studentId,
+            image: image
+        })
+
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        if(data.success){
+
+            alert("Face registered successfully");
+
+            location.reload();
+
+        }else{
+
+            alert(data.error);
+
+        }
+
+    });
+
+}
+
+
 
     function getCookie(name) {
 

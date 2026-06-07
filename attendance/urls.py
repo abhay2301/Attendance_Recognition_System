@@ -8,6 +8,11 @@ urlpatterns = [
     path('mark/', views.mark_attendance, name='mark_Attendance'),
     path('view/', views.view_attendance, name='view_Attendance'),
     path('history/', views.attendance_history, name='attendance_history'),
+    path(
+    'register-face-attendance/',
+    views.register_face_from_attendance,
+    name='register_face_from_attendance'
+),
     
     # Course URLs
     path('courses/', views.course_list, name='course_list'),

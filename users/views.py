@@ -5,6 +5,9 @@ from django.contrib.auth import login
 from .forms import StudentRegisterForm, UserRegisterForm, UserUpdateForm, ProfileUpdateForm
 from attendance.models import Attendance, Course
 from face_app.models import Person, FaceImage, RecognitionLog
+from datetime import date
+from attendance.models import Attendance
+from users.models import CustomUser
 
 def home(request):
     """Landing page for non-authenticated users"""
@@ -54,18 +57,47 @@ def profile(request):
 
 @login_required
 def dashboard(request):
-    # Get recent attendance (last 5 records)
-    recent_attendance = Attendance.objects.filter(student=request.user).order_by('-date', '-time_in')[:5]
-    
-    # Get upcoming courses
-    upcoming_courses = Course.objects.all()[:3]  # Temporary - will implement actual schedule later
-    
+
+    recent_attendance = Attendance.objects.filter(
+        student=request.user
+    ).order_by('-date', '-time_in')[:5]
+
+    upcoming_courses = Course.objects.all()[:3]
+
+    today = date.today()
+
+    total_students = CustomUser.objects.filter(
+        user_type='student'
+    ).count()
+
+    present_students = Attendance.objects.filter(
+        date=today,
+        status='present'
+    ).values('student').distinct().count()
+
+    present_percentage = 0
+
+    if total_students > 0:
+        present_percentage = round(
+            (present_students / total_students) * 100,
+            2
+        )
+
     context = {
         'title': 'Dashboard',
         'recent_attendance': recent_attendance,
-        'upcoming_courses': upcoming_courses
+        'upcoming_courses': upcoming_courses,
+
+        'present_students': present_students,
+        'present_percentage': present_percentage,
+        'total_students': total_students,
     }
-    return render(request, 'users/dashboard.html', context)
+
+    return render(
+        request,
+        'users/dashboard.html',
+        context
+    )
 
 def student_register(request):
 

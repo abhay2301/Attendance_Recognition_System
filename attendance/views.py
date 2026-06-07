@@ -1,3 +1,5 @@
+from copyreg import pickle
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -7,7 +9,7 @@ from django.db.models import Count, Q
 from django.views.decorators.csrf import csrf_exempt
 from .models import Course, Attendance, Enrollment
 from users.models import CustomUser
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import json
 
 @login_required
@@ -334,3 +336,26 @@ def add_course_api(request):
         return JsonResponse({
             "success": True
         })
+        
+       
+def register_face_from_attendance(request):
+
+    data = json.loads(request.body)
+
+    user_id = data.get("user_id")
+    image = data.get("image")
+
+    user = CustomUser.objects.get(id=user_id)
+
+    # decode image
+    # generate encoding
+
+    user.face_encoding = pickle.dumps(encoding)
+    user.is_face_registered = True
+    user.registration_date = timezone.now()
+
+    user.save()
+
+    return JsonResponse({
+        "success": True
+    })
