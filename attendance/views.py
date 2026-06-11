@@ -1,4 +1,11 @@
-from copyreg import pickle
+import base64
+import cv2
+import numpy as np
+import face_recognition
+import pickle
+
+from django.utils import timezone
+from django.http import JsonResponse
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -7,9 +14,11 @@ from django.http import JsonResponse
 from django.db import models
 from django.db.models import Count, Q
 from django.views.decorators.csrf import csrf_exempt
+import face_recognition
 from .models import Course, Attendance, Enrollment
 from users.models import CustomUser
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+
 import json
 
 @login_required
@@ -338,24 +347,74 @@ def add_course_api(request):
         })
         
        
+@csrf_exempt
+@login_required
 def register_face_from_attendance(request):
 
-    data = json.loads(request.body)
+    if request.method != "POST":
+        return JsonResponse({
+            "success": False,
+            "error": "POST request required"
+        })
 
-    user_id = data.get("user_id")
-    image = data.get("image")
+    try:
 
-    user = CustomUser.objects.get(id=user_id)
+        data = json.loads(request.body)
 
-    # decode image
-    # generate encoding
+        student_id = data.get("user_id")
+        image_data = data.get("image")
 
-    user.face_encoding = pickle.dumps(encoding)
-    user.is_face_registered = True
-    user.registration_date = timezone.now()
+        student = CustomUser.objects.get(
+            id=student_id,
+            user_type='student'
+        )
 
-    user.save()
+        # Decode Base64 Image
+        image_bytes = base64.b64decode(
+            image_data.split(',')[1]
+        )
 
-    return JsonResponse({
-        "success": True
-    })
+        np_arr = np.frombuffer(
+            image_bytes,
+            np.uint8
+        )
+
+        img = cv2.imdecode(
+            np_arr,
+            cv2.IMREAD_COLOR
+        )
+
+        rgb = cv2.cvtColor(
+            img,
+            cv2.COLOR_BGR2RGB
+        )
+
+        encodings = face_recognition.face_encodings(rgb)
+
+        if len(encodings) == 0:
+            return JsonResponse({
+                "success": False,
+                "error": "No face detected"
+            })
+
+        encoding = encodings[0]
+
+        student.face_encoding = pickle.dumps(encoding)
+
+        student.is_face_registered = True
+
+        student.registration_date = timezone.now()
+
+        student.save()
+
+        return JsonResponse({
+            "success": True,
+            "message": f"{student.get_full_name()} face registered successfully"
+        })
+
+    except Exception as e:
+
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        })

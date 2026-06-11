@@ -25,6 +25,7 @@ from .camera import get_camera, release_all_cameras
 from users.models import CustomUser
 from attendance.models import Attendance, Course
 
+
 @login_required
 def register_face_view(request):
     """Face registration page"""

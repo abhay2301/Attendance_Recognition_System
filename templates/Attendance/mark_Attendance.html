@@ -257,7 +257,7 @@ registerModal.addEventListener('hidden.bs.modal', () => {
 
     const image = canvas.toDataURL("image/jpeg");
 
-    fetch("/face/register-face-attendance/", {
+    fetch("{% url 'face_app:register_face_from_attendance' %}", {
 
         method: "POST",
 
