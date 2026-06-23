@@ -4,7 +4,7 @@ from .models import CustomUser, StudentProfile, TeacherProfile, Department
 from django.utils.html import format_html
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'user_type', 'student_id', 'employee_id', 'is_face_registered', 'is_active', 'is_staff')
+    list_display = ('username', 'full_name', 'email', 'user_type', 'student_id', 'employee_id', 'is_face_registered', 'is_active', 'is_staff')
     list_filter = ('user_type', 'is_staff', 'is_superuser', 'is_active', 'department')
     search_fields = ('username', 'email', 'student_id', 'employee_id', 'first_name', 'last_name')
     ordering = ('-date_joined',)
@@ -77,11 +77,11 @@ class StudentProfileAdmin(admin.ModelAdmin):
         )}),
     )
     
-    def student_name(self, obj):
-        return obj.user.get_full_name()
-    
-    # def student_name_display(self, obj):
+    # def student_name(self, obj):
     #     return obj.user.get_full_name()
+    
+    def student_name(self, obj):
+        return obj.user.get_full_name() or obj.user.username
 
     student_name.short_description = "Student Name"
     

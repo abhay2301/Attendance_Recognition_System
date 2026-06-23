@@ -1,4 +1,5 @@
 import base64
+import traceback
 import cv2
 import numpy as np
 import face_recognition
@@ -18,6 +19,9 @@ import face_recognition
 from .models import Course, Attendance, Enrollment
 from users.models import CustomUser
 from datetime import datetime, timedelta
+        
+from django.http import HttpResponse
+import csv
 
 import json
 
@@ -78,13 +82,71 @@ def mark_attendance(request):
 
 @login_required
 def view_attendance(request):
-    """View to see attendance records"""
+
+    records = Attendance.objects.select_related(
+        'student',
+        'course'
+    ).order_by('-date', '-time_in')
+
+    # Filters
+    course = request.GET.get('course')
+    student = request.GET.get('student')
+    status = request.GET.get('status')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    search = request.GET.get('search')
+
+    if course:
+        records = records.filter(course_id=course)
+
+    if student:
+        records = records.filter(student_id=student)
+
+    if status:
+        records = records.filter(status=status)
+
+    if date_from:
+        records = records.filter(date__gte=date_from)
+
+    if date_to:
+        records = records.filter(date__lte=date_to)
+
+    if search:
+        records = records.filter(
+            Q(student__first_name__icontains=search) |
+            Q(student__last_name__icontains=search) |
+            Q(student__student_id__icontains=search) |
+            Q(student__username__icontains=search)
+        )
+
     context = {
         'title': 'View Attendance',
-        'attendance_records': Attendance.objects.filter(student=request.user) if Attendance.objects.exists() else [],
-        'absent_students': []
+        'attendance_records': records,
+
+        'courses': Course.objects.all(),
+        'students': CustomUser.objects.filter(
+            user_type='student'
+        ),
+
+        'total_records': records.count(),
+        'present_count': records.filter(
+            status='present'
+        ).count(),
+
+        'absent_count': records.filter(
+            status='absent'
+        ).count(),
+
+        'late_count': records.filter(
+            status='late'
+        ).count(),
     }
-    return render(request, 'Attendance/view_attendance.html', context)
+
+    return render(
+        request,
+        'Attendance/view_attendance.html',
+        context
+    )
 
 @login_required
 def attendance_history(request):
@@ -320,9 +382,20 @@ def save_attendance_api(request):
         )
 
         return JsonResponse({'success': True, 'message': 'Attendance saved successfully'})
-
+    
+    
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        print("="*50)
+        traceback.print_exc()
+        print("="*50)
+
+    return JsonResponse({
+        'success': False,
+        'error': str(e)
+    })
+
+    # except Exception as e:
+    #     return JsonResponse({'success': False, 'error': str(e)})
     
 @csrf_exempt
 def add_course_api(request):
@@ -362,44 +435,72 @@ def register_face_from_attendance(request):
         data = json.loads(request.body)
 
         student_id = data.get("user_id")
-        image_data = data.get("image")
+        images = data.get("images")   # list of captured images
+
+        if not student_id:
+            return JsonResponse({
+                "success": False,
+                "error": "Student not selected"
+            })
+
+        if not images or len(images) == 0:
+            return JsonResponse({
+                "success": False,
+                "error": "No images received"
+            })
 
         student = CustomUser.objects.get(
             id=student_id,
             user_type='student'
         )
 
-        # Decode Base64 Image
-        image_bytes = base64.b64decode(
-            image_data.split(',')[1]
-        )
+        all_encodings = []
 
-        np_arr = np.frombuffer(
-            image_bytes,
-            np.uint8
-        )
+        for image_data in images:
 
-        img = cv2.imdecode(
-            np_arr,
-            cv2.IMREAD_COLOR
-        )
+            try:
 
-        rgb = cv2.cvtColor(
-            img,
-            cv2.COLOR_BGR2RGB
-        )
+                image_bytes = base64.b64decode(
+                    image_data.split(',')[1]
+                )
 
-        encodings = face_recognition.face_encodings(rgb)
+                np_arr = np.frombuffer(
+                    image_bytes,
+                    np.uint8
+                )
 
-        if len(encodings) == 0:
+                img = cv2.imdecode(
+                    np_arr,
+                    cv2.IMREAD_COLOR
+                )
+
+                rgb = cv2.cvtColor(
+                    img,
+                    cv2.COLOR_BGR2RGB
+                )
+
+                encodings = face_recognition.face_encodings(rgb)
+
+                if len(encodings) > 0:
+                    all_encodings.append(encodings[0])
+
+            except Exception:
+                continue
+
+        if len(all_encodings) < 3:
             return JsonResponse({
                 "success": False,
-                "error": "No face detected"
+                "error": "Not enough valid face captures. Please capture 5 images from different angles."
             })
 
-        encoding = encodings[0]
+        avg_encoding = np.mean(
+            all_encodings,
+            axis=0
+        )
 
-        student.face_encoding = pickle.dumps(encoding)
+        student.face_encoding = pickle.dumps(
+            avg_encoding
+        )
 
         student.is_face_registered = True
 
@@ -409,7 +510,14 @@ def register_face_from_attendance(request):
 
         return JsonResponse({
             "success": True,
-            "message": f"{student.get_full_name()} face registered successfully"
+            "message": f"{student.get_full_name()} face registered successfully using {len(all_encodings)} images"
+        })
+
+    except CustomUser.DoesNotExist:
+
+        return JsonResponse({
+            "success": False,
+            "error": "Student not found"
         })
 
     except Exception as e:
@@ -418,3 +526,41 @@ def register_face_from_attendance(request):
             "success": False,
             "error": str(e)
         })
+        
+
+
+@login_required
+def export_attendance_excel(request):
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="attendance.csv"'
+
+    writer = csv.writer(response)
+
+    writer.writerow([
+        'Student ID',
+        'Student Name',
+        'Course',
+        'Date',
+        'Status',
+        'Time In',
+        'Time Out'
+    ])
+
+    records = Attendance.objects.select_related(
+        'student',
+        'course'
+    )
+
+    for record in records:
+        writer.writerow([
+            record.student.student_id,
+            record.student.get_full_name(),
+            record.course.course_code,
+            record.date,
+            record.status,
+            record.time_in,
+            record.time_out
+        ])
+
+    return response

@@ -27,4 +27,9 @@ urlpatterns = [
     # API endpoints
     path('api/records/', views.attendance_api, name='attendance_api'),
     path('api/save/', views.save_attendance_api, name='save_attendance_api'),
+    
+    # Excel export URL
+    path('export/excel/', views.export_attendance_excel, name='export_attendance_excel'),
+    # path('export/pdf/', views.export_attendance_pdf, name='export_attendance_pdf'),
+    
 ]

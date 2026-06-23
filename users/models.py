@@ -149,7 +149,7 @@ class StudentProfile(models.Model):
 
     batch = models.CharField(
         max_length=10,
-        verbose_name="Batch (e.g., 2024-2028)"
+        verbose_name="Batch (e.g., 2026-2030)"
     )
 
     section = models.CharField(

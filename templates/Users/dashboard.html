@@ -34,7 +34,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h6 class="text-muted">Today's Absent</h6>
-                        <h3 class="fw-bold">12%</h3>
+                        <h3 class="fw-bold">{{ absent_percentage }}%</h3>
                         <p class="mb-0"><span class="text-danger">-1.2%</span> from yesterday</p>
                     </div>
                     <div class="align-self-center">
@@ -51,7 +51,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h6 class="text-muted">Total Classes</h6>
-                        <h3 class="fw-bold">156</h3>
+                        <h3 class="fw-bold">{{ total_classes }}</h3>
                         <p class="mb-0">This semester</p>
                     </div>
                     <div class="align-self-center">
@@ -68,7 +68,7 @@
                 <div class="d-flex justify-content-between">
                     <div>
                         <h6 class="text-muted">Attendance Rate</h6>
-                        <h3 class="fw-bold">92.5%</h3>
+                        <h3 class="fw-bold">{{ present_percentage }}%</h3>
                         <p class="mb-0">Overall performance</p>
                     </div>
                     <div class="align-self-center">
@@ -121,7 +121,7 @@
                     </div>
                     {% else %}
                     <div class="col-md-4 mb-3">
-                        <a href="#" class="card action-card text-center py-4">
+                        <a href="/attendance/reports/daily/" class="card action-card text-center py-4">
                             <div class="card-body">
                                 <i class="fas fa-chart-bar fa-2x mb-3 text-info"></i>
                                 <h6>Reports</h6>
@@ -186,36 +186,70 @@
                             </tr>
                         </thead>
                         <tbody>
+
+                            {% for schedule in today_classes %}
+
                             <tr>
+
                                 <td>
-                                    <strong>CS101</strong><br>
-                                    <small>Introduction to Programming</small>
+                                    <strong>{{ schedule.course.course_code }}</strong><br>
+                                    <small>{{ schedule.course.course_name }}</small>
                                 </td>
-                                <td>10:00 AM - 11:30 AM</td>
-                                <td>Room 302</td>
-                                <td>Dr. Smith</td>
-                                <td><span class="badge bg-warning">Upcoming</span></td>
+
                                 <td>
-                                    <a href="{% url 'attendance:mark_Attendance' %}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-camera me-1"></i>Mark
+                                    {{ schedule.start_time|time:"h:i A" }} - {{ schedule.end_time|time:"h:i A" }}
+                                </td>
+
+                                <td>
+                                    {{ schedule.room }}
+                                </td>
+
+                                <td>
+                                    {% if schedule.course.teacher %}
+                                        {{ schedule.course.teacher.get_full_name }}
+                                    {% else %}
+                                        Not Assigned
+                                    {% endif %}
+                                </td>
+
+                                <td>
+
+                                    {% now "H:i" as current_time %}
+
+                                    <span class="badge bg-success">
+                                        Scheduled
+                                    </span>
+
+                                </td>
+
+                                <td>
+
+                                    <a href="{% url 'attendance:mark_Attendance' %}"
+                                       class="btn btn-sm btn-primary">
+
+                                        <i class="fas fa-camera me-1"></i>
+                                        Mark
+
                                     </a>
+
                                 </td>
+
                             </tr>
+
+                            {% empty %}
+
                             <tr>
-                                <td>
-                                    <strong>MA202</strong><br>
-                                    <small>Calculus II</small>
+
+                                <td colspan="6" class="text-center">
+
+                                    No classes scheduled today
+
                                 </td>
-                                <td>02:00 PM - 03:30 PM</td>
-                                <td>Room 105</td>
-                                <td>Prof. Johnson</td>
-                                <td><span class="badge bg-success">Available</span></td>
-                                <td>
-                                    <a href="{% url 'attendance:mark_Attendance' %}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-camera me-1"></i>Mark
-                                    </a>
-                                </td>
+
                             </tr>
+
+                            {% endfor %}
+
                         </tbody>
                     </table>
                 </div>

@@ -187,9 +187,13 @@
 </div>
 
 <div class="text-center mt-3">
+    <p id="captureCount" class="fw-bold">
+    Captures: 0 / 5
+    </p>
+
     <button class="btn btn-primary"
             onclick="registerStudentFace()">
-        Capture & Save Face
+        Capture Face
     </button>
 </div>
             </div>
@@ -235,7 +239,7 @@ registerModal.addEventListener('hidden.bs.modal', () => {
     }
 
 });
-
+    let capturedImages = [];
     function registerStudentFace() {
 
     const studentId = document.getElementById('studentSelect').value;
@@ -257,6 +261,15 @@ registerModal.addEventListener('hidden.bs.modal', () => {
 
     const image = canvas.toDataURL("image/jpeg");
 
+    capturedImages.push(image);
+
+    document.getElementById("captureCount").innerHTML =
+        `Captures: ${capturedImages.length} / 5`;
+ // wait until we have 5 images are captured
+    if (capturedImages.length < 5) {
+        return;
+    }
+
     fetch("{% url 'face_app:register_face_from_attendance' %}", {
 
         method: "POST",
@@ -268,7 +281,7 @@ registerModal.addEventListener('hidden.bs.modal', () => {
 
         body: JSON.stringify({
             user_id: studentId,
-            image: image
+            images: capturedImages
         })
 
     })
@@ -277,7 +290,7 @@ registerModal.addEventListener('hidden.bs.modal', () => {
 
         if(data.success){
 
-            alert("Face registered successfully");
+            alert("5 Face Images registered successfully");
 
             location.reload();
 

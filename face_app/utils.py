@@ -114,17 +114,15 @@ class FaceRecognitionSystem:
                 continue
 
             encoding = face_recognition.face_encodings(rgb, faces)[0]
-
             encodings.append(encoding)
 
-            FaceImage.objects.create(
-                person_id=user.id,
-                encoding=encoding.tolist()
-            )
-
         if len(encodings) > 0:
+            avg_encoding = np.mean(encodings, axis=0)
+
+            user.face_encoding = pickle.dumps(avg_encoding)
             user.is_face_registered = True
             user.save()
+
             return True
 
         return False
