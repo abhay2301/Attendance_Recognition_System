@@ -29,7 +29,7 @@ class FaceRecognitionSystem:
         from users.models import CustomUser
         
         try:
-            registered_users = CustomUser.objects.filter(is_face_registered=True).exclude(face_encoding=None)
+            registered_users = CustomUser.objects.filter(user_type='student', is_face_registered=True).exclude(face_encoding=None)
             
             for user in registered_users:
                 if user.face_encoding:
