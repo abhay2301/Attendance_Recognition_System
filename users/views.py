@@ -43,10 +43,10 @@ def profile(request):
         )
     
     # Get face images
-    face_images = FaceImage.objects.filter(person=person).order_by('-created_at')
+    face_images = FaceImage.objects.filter(person_id=person).order_by('-created_at')
     
     # Get recognition logs
-    recognition_logs = RecognitionLog.objects.filter(person=person).order_by('-timestamp')[:10]
+    recognition_logs = RecognitionLog.objects.filter(person_id=person).order_by('-timestamp')[:10]
     
     # Get attendance records
     attendance_records = Attendance.objects.filter(student=request.user).order_by('-date')[:10]

@@ -27,24 +27,37 @@ class FaceRecognitionSystem:
     def load_known_faces(self):
         """Load known face encodings from database"""
         from users.models import CustomUser
-        
+
+        # Clear old data first
+        self.known_face_encodings = []
+        self.known_face_names = []
+        self.known_face_ids = []
+
         try:
-            registered_users = CustomUser.objects.filter(user_type='student', is_face_registered=True).exclude(face_encoding=None)
-            
+            registered_users = CustomUser.objects.filter(
+                user_type='student',
+                is_face_registered=True
+            ).exclude(face_encoding=None)
+
+            print("Registered Users:", registered_users.count())
+
             for user in registered_users:
-                if user.face_encoding:
-                    try:
-                        # Decode face encoding from binary
-                        encoding = pickle.loads(user.face_encoding)
-                        self.known_face_encodings.append(encoding)
-                        self.known_face_names.append(user.username)
-                        self.known_face_ids.append(user.id)
-                    except Exception as e:
-                        logger.error(f"Error loading face encoding for user {user.username}: {e}")
-            
-            logger.info(f"Loaded {len(self.known_face_encodings)} known faces from database")
+                try:
+                    encoding = pickle.loads(user.face_encoding)
+
+                    self.known_face_encodings.append(encoding)
+                    self.known_face_names.append(user.username)
+                    self.known_face_ids.append(user.id)
+
+                    print(f"Loaded: {user.username} ({user.id})")
+
+                except Exception as e:
+                    print(e)
+
+            print("Known Face IDs:", self.known_face_ids)
+
         except Exception as e:
-            logger.error(f"Error loading known faces: {e}")
+            print(e)
     
     def encode_face(self, image_path=None, image_array=None):
         """
@@ -128,65 +141,69 @@ class FaceRecognitionSystem:
         return False
     
     def recognize_face(self, image, tolerance=None):
-        """
-        Recognize a face from image
-        
-        Args:
-            image: Numpy array of image
-            tolerance: Matching tolerance
-            
-        Returns:
-            dict with user info or None
-        """
+
         try:
             if tolerance is None:
                 tolerance = self.tolerance
-            
-            # Encode the face in the image
+
             face_encoding = self.encode_face(image_array=image)
-            
+
             if face_encoding is None:
                 return None
-            
-            # Compare with known faces
+
+            # No registered faces loaded
+            if len(self.known_face_encodings) == 0:
+                return None
+
             matches = face_recognition.compare_faces(
-                self.known_face_encodings, 
-                face_encoding, 
+                self.known_face_encodings,
+                face_encoding,
                 tolerance=tolerance
             )
-            
-            # Find the best match
+
             face_distances = face_recognition.face_distance(
-                self.known_face_encodings, 
+                self.known_face_encodings,
                 face_encoding
             )
-            
-            if not matches or not any(matches):
-                logger.info("No match found")
+
+            if len(face_distances) == 0:
                 return None
-            
-            # Get the index of the best match
+
+            if not any(matches):
+                return None
+
             best_match_index = np.argmin(face_distances)
-            
+
             if not matches[best_match_index]:
-                logger.info("Best match below threshold")
                 return None
-            
-            confidence = 1 - face_distances[best_match_index]
-            
-            # Return user info
+
+            confidence = (1 - face_distances[best_match_index]) * 100
+
             from users.models import CustomUser
-            user = CustomUser.objects.get(id=self.known_face_ids[best_match_index])
-            
+
+            user = CustomUser.objects.get(
+                id=self.known_face_ids[best_match_index]
+            )
+
+            # SECURITY CHECKS
+            if user.user_type != "student":
+                return None
+
+            if not user.is_face_registered:
+                return None
+
+            if not user.face_encoding:
+                return None
+
             return {
-                'user_id': user.id,
-                'username': user.username,
-                'name': user.get_full_name(),
-                'confidence': round(confidence * 100, 2),
-                'student_id': user.student_id,
-                'match_index': best_match_index
+                "user_id": user.id,
+                "username": user.username,
+                "name": user.get_full_name(),
+                "confidence": round(confidence, 2),
+                "student_id": user.student_id,
+                "match_index": best_match_index
             }
-            
+
         except Exception as e:
             logger.error(f"Error recognizing face: {e}")
             return None

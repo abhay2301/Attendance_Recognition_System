@@ -17,7 +17,7 @@ from django.db.models import Count, Q
 from django.views.decorators.csrf import csrf_exempt
 import face_recognition
 from .models import Course, Attendance, Enrollment
-from users.models import CustomUser
+from users.models import CustomUser, StudentProfile
 from datetime import datetime, timedelta
         
 from django.http import HttpResponse
@@ -56,7 +56,9 @@ def mark_attendance(request):
     no_clock_in_yesterday = total_students - clocked_in_yesterday
 
     # Students list for the modal
-    students = CustomUser.objects.filter(user_type='student', is_active=True).order_by('first_name')
+    students = StudentProfile.objects.select_related(
+        'user'
+    ).all().order_by('roll_number')
 
     context = {
         'title': 'Mark Attendance',
@@ -78,6 +80,10 @@ def mark_attendance(request):
         'absent_delta': absent_today - absent_yesterday,
         'no_clock_in_delta': no_clock_in_today - no_clock_in_yesterday,
     }
+    
+    print("Student Profiles:", students.count())
+    
+    
     return render(request, 'Attendance/mark_Attendance.html', context)
 
 @login_required
@@ -434,7 +440,19 @@ def register_face_from_attendance(request):
 
         data = json.loads(request.body)
 
+        if request.user.user_type != 'teacher':
+            return JsonResponse({
+                "success": False,
+                "error": "Only teachers can register student faces."
+            })
+        
+        
         student_id = data.get("user_id")
+
+        
+        
+        
+        
         images = data.get("images")   # list of captured images
 
         if not student_id:
@@ -449,10 +467,32 @@ def register_face_from_attendance(request):
                 "error": "No images received"
             })
 
+        # print("Available student users:")
+
+        # for s in CustomUser.objects.filter(user_type='student'):
+        #     print(
+        #         "ID =", s.id,
+        #         "| Username =", s.username,
+        #         "| Student ID =", s.student_id
+        #     )
+        
+        
         student = CustomUser.objects.get(
             id=student_id,
             user_type='student'
         )
+
+        # allowed = Enrollment.objects.filter(
+        #     student=student,
+        #     course__teacher=request.user,
+        #     is_active=True
+        # ).exists()
+
+        # if not allowed:
+        #     return JsonResponse({
+        #         "success": False,
+        #         "error": "This student is not enrolled in your course."
+        #     })
 
         all_encodings = []
 
@@ -514,10 +554,13 @@ def register_face_from_attendance(request):
         })
 
     except CustomUser.DoesNotExist:
-
+        
+        print("Student lookup failed!")
+        print("Received ID:", student_id)
+        
         return JsonResponse({
             "success": False,
-            "error": "Student not found"
+            "error": f"Student not found. Received ID: {student_id}"
         })
 
     except Exception as e:

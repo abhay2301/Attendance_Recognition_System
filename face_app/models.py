@@ -26,7 +26,7 @@ class Person(models.Model):
 class FaceImage(models.Model):
     """Model to store face images and their encodings."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='face_images')
+    person_id = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='face_images')
     image = models.ImageField(
         upload_to='faces',
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])]

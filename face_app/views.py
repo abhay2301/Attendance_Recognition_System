@@ -22,37 +22,61 @@ from users.forms import FaceImageUploadForm
 from .models import Person
 from .utils import face_system
 from .camera import get_camera, release_all_cameras
-from users.models import CustomUser
+from users.models import CustomUser, StudentProfile
 from attendance.models import Attendance, Course
 
 
 @login_required
 def register_face_view(request):
-    """Face registration page"""
-    if request.user.is_face_registered:
-        messages.info(request, "Your face is already registered!")
-        return redirect('dashboard')
-    
+    """Teacher registers student faces"""
+
+    if request.user.user_type != "teacher":
+        messages.error(
+            request,
+            "Only teachers can register student faces."
+        )
+        return redirect("dashboard")
+
+    students = StudentProfile.objects.select_related(
+        "user"
+    ).filter(
+        user__user_type="student"
+    ).order_by("roll_number")
+
+    print("Students Found:", students.count())   # Debug
+
     context = {
-        'title': 'Register Face',
-        'user': request.user
+        "title": "Register Face",
+        "user": request.user,
+        "students": students,
     }
-    return render(request, 'face_registration/register_face.html', context)
+
+    return render(
+        request,
+        "face_registration/register_face.html",
+        context
+    )
 
 @login_required
 def mark_attendance_view(request):
-    """Mark attendance page"""
     courses = Course.objects.filter(is_active=True)
-    students = CustomUser.objects.filter(
-    user_type='student'
-    )
+
+    students = StudentProfile.objects.select_related(
+        'user'
+    ).all().order_by('roll_number')
+
     context = {
         'title': 'Mark Attendance',
         'courses': courses,
         'students': students,
         'user': request.user
     }
-    return render(request, 'face_recognition/mark_attendance.html', context)
+
+    return render(
+        request,
+        'face_recognition/mark_attendance.html',
+        context
+    )
 
 @login_required
 def view_attendance_view(request):
@@ -70,53 +94,53 @@ def view_attendance_view(request):
     }
     return render(request, 'face_app/view_attendance.html', context)
 
-@csrf_exempt
-@require_POST
-@login_required
-def capture_faces_for_registration(request):
-    """Capture multiple faces for registration"""
-    try:
-        data = json.loads(request.body)
-        images_base64 = data.get('images', [])
+# @csrf_exempt
+# @require_POST
+# @login_required
+# def capture_faces_for_registration(request):
+#     """Capture multiple faces for registration"""
+#     try:
+#         data = json.loads(request.body)
+#         images_base64 = data.get('images', [])
         
-        if not images_base64:
-            return JsonResponse({'success': False, 'error': 'No images provided'})
+#         if not images_base64:
+#             return JsonResponse({'success': False, 'error': 'No images provided'})
         
-        images = []
-        for img_base64 in images_base64:
-            # Convert base64 to numpy array
-            img_data = base64.b64decode(img_base64.split(',')[1])
-            np_arr = np.frombuffer(img_data, np.uint8)
-            img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+#         images = []
+#         for img_base64 in images_base64:
+#             # Convert base64 to numpy array
+#             img_data = base64.b64decode(img_base64.split(',')[1])
+#             np_arr = np.frombuffer(img_data, np.uint8)
+#             img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
             
-            if img is not None:
-                images.append(img)
+#             if img is not None:
+#                 images.append(img)
         
-        if len(images) < 3:
-            return JsonResponse({
-                'success': False, 
-                'error': f'Need at least 3 images. Got {len(images)}'
-            })
+#         if len(images) < 3:
+#             return JsonResponse({
+#                 'success': False, 
+#                 'error': f'Need at least 3 images. Got {len(images)}'
+#             })
         
-        # Register face
-        success = face_system.register_face(request.user, images)
+#         # Register face
+#         success = face_system.register_face(request.user, images)
         
-        if success:
-            return JsonResponse({
-                'success': True,
-                'message': 'Face registration successful!'
-            })
-        else:
-            return JsonResponse({
-                'success': False,
-                'error': 'Failed to register face. Please try again.'
-            })
+#         if success:
+#             return JsonResponse({
+#                 'success': True,
+#                 'message': 'Face registration successful!'
+#             })
+#         else:
+#             return JsonResponse({
+#                 'success': False,
+#                 'error': 'Failed to register face. Please try again.'
+#             })
             
-    except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        })
+#     except Exception as e:
+#         return JsonResponse({
+#             'success': False,
+#             'error': str(e)
+#         })
 
 @csrf_exempt
 @require_POST
@@ -125,6 +149,13 @@ def mark_attendance_api(request):
     """API to mark attendance"""
     try:
         data = json.loads(request.body)
+        
+        if request.user.user_type != 'teacher':
+            return JsonResponse({
+                'success': False,
+                'error': 'Only teachers can mark attendance.'
+            })
+        
         image_base64 = data.get('image', '')
         course_id = data.get('course_id', '')
         
@@ -142,8 +173,13 @@ def mark_attendance_api(request):
         if img is None:
             return JsonResponse({'success': False, 'error': 'Invalid image'})
         
+        # Reload latest registered faces
+        face_system.load_known_faces()
+        
         # Recognize face
         recognition_result = face_system.recognize_face(img)
+        
+        print("Recognition Result:", recognition_result)
         
         if not recognition_result:
             return JsonResponse({
@@ -152,7 +188,7 @@ def mark_attendance_api(request):
             })
         
         # Check confidence
-        if recognition_result['confidence'] < 60:  # 60% confidence threshold
+        if recognition_result['confidence'] < 50:  # 50% confidence threshold
             return JsonResponse({
                 'success': False,
                 'error': f'Low confidence ({recognition_result["confidence"]}%). Please try again.'
@@ -160,6 +196,28 @@ def mark_attendance_api(request):
         
         # Get user
         user = CustomUser.objects.get(id=recognition_result['user_id'])
+        
+        # Only students can be recognized
+        if user.user_type != 'student':
+            return JsonResponse({
+                'success': False,
+                'error': 'Only student faces can mark attendance.'
+            })
+
+        # Face must be registered
+        if not user.is_face_registered:
+            return JsonResponse({
+                'success': False,
+                'error': 'Student face is not registered.'
+            })
+
+        # Face encoding must exist
+        if not user.face_encoding:
+            return JsonResponse({
+                'success': False,
+                'error': 'Face encoding not found.'
+            })
+        
         course = get_object_or_404(Course, id=course_id)
         
         # Check if attendance already marked today

@@ -102,21 +102,43 @@
                     </div>
                 </div>
 
-                <!-- Step 1: Instructions -->
+                <!-- Step 1: Instructions + Student Selection -->
                 <div id="step-1" class="step-content">
                     <div class="instruction-step">
-                        <h5><span class="step-number">1</span> Prepare Yourself</h5>
-                        <p>Make sure you're in a well-lit area and your face is clearly visible.</p>
+                        <h5><span class="step-number">1</span> Select Student</h5>
+                        <p>Choose the student whose face you want to register.</p>
+                        <div class="mb-3">
+                            <label for="student-select" class="form-label"><strong>Student</strong></label>
+                           <select id="student-select" class="form-select">
+                                <option value="">-- Select a student --</option>
+
+                                {% for student in students %}
+                                    <option
+                                        value="{{ student.user.id }}"
+                                        data-profile="{{ student.id }}"
+                                    >
+                                        {{ student.roll_number }} - {{ student.user_full_name }}
+                                    </option>
+                                {% empty %}
+                                    <option value="">No students available</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <h5><span class="step-number">2</span> Prepare Yourself</h5>
+                        <p>Make sure the student is in a well-lit area and their face is clearly visible.</p>
                         <ul>
                             <li>Remove glasses, hats, or face coverings</li>
-                            <li>Ensure good lighting on your face</li>
+                            <li>Ensure good lighting on the face</li>
                             <li>Look directly at the camera</li>
                             <li>Keep a neutral facial expression</li>
                         </ul>
                     </div>
 
                     <div class="instruction-step">
-                        <h5><span class="step-number">2</span> Capture Process</h5>
+                        <h5><span class="step-number">3</span> Capture Process</h5>
                         <p>We'll capture multiple images from different angles for better accuracy.</p>
                         <ul>
                             <li>Front-facing view (3 images)</li>
@@ -126,18 +148,19 @@
                     </div>
 
                     <div class="instruction-step">
-                        <h5><span class="step-number">3</span> Privacy Notice</h5>
-                        <p>Your face data will be securely stored and used only for attendance purposes.</p>
+                        <h5><span class="step-number">4</span> Privacy Notice</h5>
+                        <p>The student's face data will be securely stored and used only for attendance purposes.</p>
                         <div class="alert alert-info">
                             <i class="fas fa-shield-alt me-2"></i>
-                            We use encryption to protect your facial data and never share it with third parties.
+                            We use encryption to protect facial data and never share it with third parties.
                         </div>
                     </div>
 
                     <div class="text-center mt-4">
-                        <button id="start-registration" class="btn btn-primary btn-lg">
+                        <button id="start-registration" class="btn btn-primary btn-lg" disabled>
                             <i class="fas fa-play me-2"></i>Start Registration
                         </button>
+                        <small class="d-block text-muted mt-2">Please select a student to enable the button.</small>
                     </div>
                 </div>
 
@@ -154,6 +177,7 @@
                         </div>
 
                         <div class="text-center mb-4">
+                            <h5>Registering for: <span id="selected-student-name" class="text-primary"></span></h5>
                             <h5>Capture <span id="capture-count">0</span>/7 Images</h5>
                             <p id="capture-instruction">Look straight at the camera</p>
                         </div>
@@ -178,7 +202,7 @@
                             <span class="visually-hidden">Processing...</span>
                         </div>
                         <h4>Processing Face Data</h4>
-                        <p class="text-muted">Extracting facial features and creating your unique face signature...</p>
+                        <p class="text-muted">Extracting facial features and creating unique face signature...</p>
                         <div id="processing-steps" class="mt-4">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Analyzing facial features</span>
@@ -292,9 +316,35 @@
         "Turn head slightly right",
         "Turn a bit more right"
     ];
+    let selectedStudentId = null;
+    let selectedStudentName = '';
+
+    // Student select change
+    const studentSelect = document.getElementById('student-select');
+    const startButton = document.getElementById('start-registration');
+
+    studentSelect.addEventListener('change', function () {
+
+        console.log(
+            "Selected Student:",
+            this.value,
+            this.options[this.selectedIndex].text
+        );
+
+        selectedStudentId = this.value;
+        selectedStudentName = this.options[this.selectedIndex].text;
+
+        if (selectedStudentId !== "") {
+            startButton.disabled = false;
+        } else {
+            startButton.disabled = true;
+        }
+    });
 
     // Step navigation
     document.getElementById('start-registration').addEventListener('click', () => {
+        // Display selected student name in step 2
+        document.getElementById('selected-student-name').textContent = selectedStudentName;
         showStep(2);
         startCamera();
     });
@@ -395,15 +445,21 @@
         // Get CSRF token
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value
             || '{{ csrf_token }}';
-
-        // Send images to server
-        fetch("{% url 'face_app:face_capture' %}", {
+        console.log({
+            user_id: selectedStudentId,
+            images: capturedImages.length
+        });
+        // Send images AND the selected student ID to server
+        fetch("{% url 'face_app:register_face_from_attendance' %}", {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken,
             },
-            body: JSON.stringify({ images: capturedImages })
+            body: JSON.stringify({
+                images: capturedImages,
+                user_id: selectedStudentId   // <-- new field
+            })
         })
         .then(response => response.json())
         .then(data => {
