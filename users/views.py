@@ -58,63 +58,151 @@ def profile(request):
     }
     return render(request, 'users/profile.html', context)
 
+from datetime import date
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.utils import timezone
+
 @login_required
 def dashboard(request):
+
+    today = timezone.localdate()
+    today_day = today.strftime("%A")
+    current_time = timezone.localtime().time()
+
     recent_attendance = Attendance.objects.filter(
         student=request.user
     ).order_by('-date', '-time_in')[:5]
 
-    upcoming_courses = Course.objects.all()[:3]
+    # -------------------------------
+    # ADMIN DASHBOARD
+    # -------------------------------
+    if request.user.user_type == "admin":
 
-    today = date.today()
+        today_classes = CourseSchedule.objects.filter(
+            day=today_day
+        ).select_related(
+            "course",
+            "course__teacher"
+        ).order_by("start_time")
 
-    # Today's classes
-    today_day = datetime.now().strftime("%A")
+        total_students = CustomUser.objects.filter(
+            user_type="student"
+        ).count()
 
-    today_classes = CourseSchedule.objects.filter(
-        day=today_day
-    ).select_related(
-        'course',
-        'course__teacher'
-    ).order_by('start_time')
-
-    total_students = CustomUser.objects.filter(
-        user_type='student'
-    ).count()
-
-    present_students = Attendance.objects.filter(
-        date=today,
-        status='present'
-    ).values('student').distinct().count()
-
-    present_percentage = 0
-    absent_percentage = 0
-
-    if total_students > 0:
-        present_percentage = round(
-            (present_students / total_students) * 100, 2
-        )
+        present_students = Attendance.objects.filter(
+            date=today,
+            status="present"
+        ).values("student").distinct().count()
 
         absent_students = total_students - present_students
+
+        present_percentage = round(
+            (present_students / total_students) * 100, 2
+        ) if total_students else 0
+
         absent_percentage = round(
-            absent_students / total_students * 100, 2
-        )
+            (absent_students / total_students) * 100, 2
+        ) if total_students else 0
+
+    # -------------------------------
+    # TEACHER DASHBOARD
+    # -------------------------------
+    elif request.user.user_type == "teacher":
+
+        today_classes = CourseSchedule.objects.filter(
+            day=today_day,
+            course__teacher=request.user
+        ).select_related(
+            "course"
+        ).order_by("start_time")
+
+        teacher_students = Enrollment.objects.filter(
+            course__teacher=request.user,
+            is_active=True
+        ).values("student").distinct()
+
+        total_students = teacher_students.count()
+
+        present_students = Attendance.objects.filter(
+            course__teacher=request.user,
+            date=today,
+            status="present"
+        ).values("student").distinct().count()
+
+        absent_students = total_students - present_students
+
+        present_percentage = round(
+            (present_students / total_students) * 100, 2
+        ) if total_students else 0
+
+        absent_percentage = round(
+            (absent_students / total_students) * 100, 2
+        ) if total_students else 0
+
+    # -------------------------------
+    # STUDENT DASHBOARD
+    # -------------------------------
     else:
-        absent_students = 0
+
+        today_classes = CourseSchedule.objects.filter(
+            day=today_day,
+            course__enrollments__student=request.user,
+            course__enrollments__is_active=True
+        ).select_related(
+            "course",
+            "course__teacher"
+        ).distinct().order_by("start_time")
+
+        total_students = Attendance.objects.filter(
+            student=request.user
+        ).count()
+
+        present_students = Attendance.objects.filter(
+            student=request.user,
+            status="present"
+        ).count()
+
+        absent_students = total_students - present_students
+
+        present_percentage = round(
+            (present_students / total_students) * 100, 2
+        ) if total_students else 0
+
+        absent_percentage = round(
+            (absent_students / total_students) * 100, 2
+        ) if total_students else 0
+
+    # -------------------------------
+    # Class Status
+    # -------------------------------
+    for schedule in today_classes:
+
+        if current_time < schedule.start_time:
+            schedule.status = "Upcoming"
+
+        elif schedule.start_time <= current_time <= schedule.end_time:
+            schedule.status = "Ongoing"
+
+        else:
+            schedule.status = "Completed"
 
     context = {
-        'title': 'Dashboard',
-        'recent_attendance': recent_attendance,
-        'upcoming_courses': upcoming_courses,
-        'today_classes': today_classes,
-        'present_students': present_students,
-        'present_percentage': present_percentage,
-        'total_students': total_students,
-        'absent_students': absent_students,
-        'absent_percentage': absent_percentage
+        "title": "Dashboard",
+        "recent_attendance": recent_attendance,
+        "today_classes": today_classes,
+        "present_students": present_students,
+        "present_percentage": present_percentage,
+        "absent_students": absent_students,
+        "absent_percentage": absent_percentage,
+        "total_students": total_students,
     }
 
-    return render(request, 'users/dashboard.html', context)
+    return render(
+        request,
+        "users/dashboard.html",
+        context,
+    )
 
 def student_register(request):
 

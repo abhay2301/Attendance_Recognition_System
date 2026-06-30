@@ -79,7 +79,7 @@
         </div>
     </div>
 </div>
-
+{% if user.user_type == 'teacher' %}
 <div class="row">
     <!-- Quick Actions -->
     <div class="col-lg-8 mb-4">
@@ -165,6 +165,7 @@
     </div>
 </div>
 
+{% endif %}
 <div class="row">
     <!-- Upcoming Classes -->
     <div class="col-lg-12">
