@@ -7,7 +7,7 @@ from .forms import StudentRegisterForm, UserRegisterForm, UserUpdateForm, Profil
 from attendance.models import Attendance, Course
 from face_app.models import Person, FaceImage, RecognitionLog
 from datetime import date, datetime
-from attendance.models import Attendance, CourseSchedule
+from attendance.models import Attendance, CourseSchedule, Enrollment
 from users.models import CustomUser
 
 def home(request):
