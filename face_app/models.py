@@ -26,7 +26,7 @@ class Person(models.Model):
 class FaceImage(models.Model):
     """Model to store face images and their encodings."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    person = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='face_images')
+    person_id = models.ForeignKey(Person, on_delete=models.CASCADE, related_name='face_images')
     image = models.ImageField(
         upload_to='faces',
         validators=[FileExtensionValidator(allowed_extensions=['jpg', 'jpeg', 'png'])]
@@ -55,7 +55,7 @@ class RecognitionLog(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    person = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, related_name='recognition_logs')
+    person_id = models.ForeignKey(Person, on_delete=models.SET_NULL, null=True, blank=True, related_name='recognition_logs')
     input_image = models.ImageField(upload_to='recognition_logs/%Y/%m/%d/')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='FAILED')
     confidence = models.FloatField(blank=True, null=True, help_text='Recognition confidence score')

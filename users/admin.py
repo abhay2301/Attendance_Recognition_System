@@ -4,7 +4,7 @@ from .models import CustomUser, StudentProfile, TeacherProfile, Department
 from django.utils.html import format_html
 
 class CustomUserAdmin(UserAdmin):
-    list_display = ('username', 'email', 'user_type', 'student_id', 'employee_id', 'is_face_registered', 'is_active', 'is_staff')
+    list_display = ('username', 'full_name', 'email', 'user_type', 'student_id', 'employee_id', 'is_face_registered', 'is_active', 'is_staff')
     list_filter = ('user_type', 'is_staff', 'is_superuser', 'is_active', 'department')
     search_fields = ('username', 'email', 'student_id', 'employee_id', 'first_name', 'last_name')
     ordering = ('-date_joined',)
@@ -35,7 +35,7 @@ class CustomUserAdmin(UserAdmin):
         ('Important Dates', {'fields': ('last_login', 'date_joined', 'created_at', 'updated_at')}),
     )
     
-    readonly_fields = ('last_login', 'date_joined', 'created_at', 'updated_at')
+    readonly_fields = ('last_login', 'date_joined', 'created_at', 'updated_at', 'face_encoding')
     
     add_fieldsets = (
         (None, {
@@ -77,11 +77,11 @@ class StudentProfileAdmin(admin.ModelAdmin):
         )}),
     )
     
-    def student_name(self, obj):
-        return obj.user.get_full_name()
-    
-    # def student_name_display(self, obj):
+    # def student_name(self, obj):
     #     return obj.user.get_full_name()
+    
+    def student_name(self, obj):
+        return obj.user.get_full_name() or obj.user.username
 
     student_name.short_description = "Student Name"
     
@@ -127,27 +127,83 @@ class TeacherProfileAdmin(admin.ModelAdmin):
     user_full_name.short_description = 'Teacher Name'
 
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'hod', 'total_students', 'total_teachers')
-    list_filter = ('established_date',)
-    search_fields = ('name', 'code', 'hod__username')
-    readonly_fields = ('created_at', 'updated_at', 'total_students', 'total_teachers')
-    
+
+    list_display = (
+        'code',
+        'name',
+        'hod',
+        'total_students',
+        'total_teachers'
+    )
+
+    list_filter = (
+        'established_date',
+    )
+
+    search_fields = (
+        'name',
+        'code',
+        'hod__username'
+    )
+
+    # Only timestamps should be read-only
+    readonly_fields = (
+        'created_at',
+        'updated_at'
+    )
+
     fieldsets = (
-        ('Basic Information', {'fields': (
-            'name', 'code', 'description', 'established_date'
-        )}),
-        ('Head of Department', {'fields': (
-            'hod',
-        )}),
-        ('Statistics', {'fields': (
-            'total_students', 'total_teachers'
-        )}),
-        ('Contact Information', {'fields': (
-            'office_phone', 'email', 'location'
-        )}),
-        ('Timestamps', {'fields': (
-            'created_at', 'updated_at'
-        )}),
+        (
+            'Basic Information',
+            {
+                'fields': (
+                    'name',
+                    'code',
+                    'description',
+                    'established_date'
+                )
+            }
+        ),
+
+        (
+            'Head of Department',
+            {
+                'fields': (
+                    'hod',
+                )
+            }
+        ),
+
+        (
+            'Statistics',
+            {
+                'fields': (
+                    'total_students',
+                    'total_teachers'
+                )
+            }
+        ),
+
+        (
+            'Contact Information',
+            {
+                'fields': (
+                    'office_phone',
+                    'email',
+                    'location'
+                )
+            }
+        ),
+
+        (
+            'Timestamps',
+            {
+                'fields': (
+                    'created_at',
+                    'updated_at'
+                )
+            }
+        ),
     )
 
 admin.site.register(CustomUser, CustomUserAdmin)

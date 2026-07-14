@@ -25,7 +25,7 @@ class UserRegisterForm(UserCreationForm):
     
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'password1', 'password2', 'user_type', 'student_id', 'department', 'phone']
+        fields = ['first_name', 'last_name', 'username', 'email', 'password1', 'password2', 'user_type', 'student_id', 'department', 'phone']
 
 class UserUpdateForm(forms.ModelForm):
     email = forms.EmailField()
@@ -44,3 +44,8 @@ class FaceImageUploadForm(forms.ModelForm):
     class Meta:
         model = FaceImage
         fields = ['image']
+        
+        
+class UserLoginForm(forms.Form):
+    username = forms.CharField(max_length=150)
+    password = forms.CharField(widget=forms.PasswordInput)

@@ -11,6 +11,16 @@ class Course(models.Model):
         ('seminar', 'Seminar'),
     )
     
+    # DAY_CHOICES = (
+    #     ('Monday', 'Monday'),
+    #     ('Tuesday', 'Tuesday'),
+    #     ('Wednesday', 'Wednesday'),
+    #     ('Thursday', 'Thursday'),
+    #     ('Friday', 'Friday'),
+    #     ('Saturday', 'Saturday'),
+    # )
+    
+    
     course_code = models.CharField(max_length=50, unique=True, verbose_name="Course Code")
     course_name = models.CharField(max_length=200, verbose_name="Course Name")
     course_type = models.CharField(max_length=20, choices=COURSE_TYPE_CHOICES, default='core')
@@ -36,6 +46,30 @@ class Course(models.Model):
         related_name='courses_co_taught',
         verbose_name="Co-Teacher"
     )
+    # Schedule Details
+    
+   
+    
+    # day = models.CharField(
+    #     max_length=20,
+    #     choices=DAY_CHOICES,
+    #     blank=True,
+    #     null=True
+    # )
+
+    # start_time = models.TimeField(
+    #     blank=True,
+    #     null=True
+    # )
+
+    # end_time = models.TimeField(
+    #     blank=True,
+    #     null=True
+    # )
+
+    # room = models.CharField(max_length=50)
+
+    # created_at = models.DateTimeField(auto_now_add=True)
     
     # Schedule Details
     schedule = models.CharField(max_length=100, verbose_name="Schedule (e.g., Mon-Wed-Fri 10:00-11:30)")
@@ -237,3 +271,39 @@ class AttendanceLog(models.Model):
     
     def __str__(self):
         return f"{self.student.username if self.student else 'Unknown'} - {self.action} - {self.timestamp}"
+    
+
+
+class CourseSchedule(models.Model):
+
+    DAY_CHOICES = (
+        ('Monday', 'Monday'),
+        ('Tuesday', 'Tuesday'),
+        ('Wednesday', 'Wednesday'),
+        ('Thursday', 'Thursday'),
+        ('Friday', 'Friday'),
+        ('Saturday', 'Saturday'),
+    )
+
+    course = models.ForeignKey(
+        Course,
+        on_delete=models.CASCADE,
+        related_name='schedules'
+    )
+
+    day = models.CharField(
+        max_length=20,
+        choices=DAY_CHOICES
+    )
+
+    start_time = models.TimeField()
+
+    end_time = models.TimeField()
+
+    room = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    def __str__(self):
+        return f"{self.course.course_code} - {self.day}"

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from .models import CourseSchedule
 from .models import Course, Enrollment, Attendance, AttendanceLog
 from django.utils.html import format_html
 from datetime import date
@@ -153,3 +154,7 @@ class AttendanceLogAdmin(admin.ModelAdmin):
             'timestamp',
         )}),
     )
+    
+@admin.register(CourseSchedule)
+class CourseScheduleAdmin(admin.ModelAdmin):
+    list_display = ['course', 'day', 'start_time', 'end_time']
