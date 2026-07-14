@@ -1,147 +1,374 @@
-{% extends 'base.html' %}
-{% load crispy_forms_tags %}
+<!-- ============================================================ -->
+<!--  FILE: register.html (Labels are now bold)                    -->
+<!-- ============================================================ -->
+
+{% extends 'Users/auth_base.html' %}
+{% load static %}
 
 {% block title %}Register - Face Recognition Attendance System{% endblock %}
 
-{% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow border-0">
-            <div class="card-body p-5">
-                <div class="text-center mb-4">
-                    <h3 class="fw-bold">Create Account</h3>
-                    <p class="text-muted">Fill in your details to get started</p>
+{% block auth_content %}
+<!-- Add a style block to make labels bold and consistent -->
+<style>
+    .auth-form .form-group label {
+        font-weight: 600;
+        color: var(--gray-700);
+        margin-bottom: 4px;
+        display: block;
+    }
+    /* Optional: fine-tune checkbox label */
+    .form-check-label {
+        font-weight: 400;
+    }
+</style>
+
+<div class="auth-right-inner">
+
+    <!-- Header -->
+    <div class="header">
+        <h3>Create Account </h3>
+       
+    </div>
+
+    <!-- Display form errors (non‑field and field‑specific) -->
+    {% if form.errors %}
+    <div class="alert-custom shake">
+        <i class="fas fa-exclamation-triangle"></i>
+        <div>
+            <strong>Please correct the following errors:</strong>
+            <ul class="mb-0 mt-1" style="padding-left:20px;">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Register Form -->
+    <form method="POST" enctype="multipart/form-data" class="auth-form" id="registerForm" novalidate>
+        {% csrf_token %}
+
+        <!-- Row: First Name + Last Name -->
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="first_name">First Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" class="form-control" id="first_name" name="first_name"
+                               placeholder="John" value="{{ form.first_name.value|default:'' }}" required>
+                    </div>
+                    {% if form.first_name.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
-                
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="first_name" class="form-label">First Name</label>
-                            <input type="text" class="form-control" id="first_name" name="first_name" required>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="last_name" class="form-label">Last Name</label>
-                            <input type="text" class="form-control" id="last_name" name="last_name" required>
-                        </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="last_name">Last Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                        <input type="text" class="form-control" id="last_name" name="last_name"
+                               placeholder="Doe" value="{{ form.last_name.value|default:'' }}" required>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Username</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-at"></i></span>
-                            <input type="text" class="form-control" id="username" name="username" required>
-                        </div>
-                        <small class="form-text text-muted">Choose a unique username</small>
+                    {% if form.last_name.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.last_name.errors %}{{ error }}{% endfor %}
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email Address</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                            <input type="email" class="form-control" id="email" name="email" required>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="password1" class="form-label">Password</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                <input type="password" class="form-control" id="password1" name="password1" required>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="password2" class="form-label">Confirm Password</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                <input type="password" class="form-control" id="password2" name="password2" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="user_type" class="form-label">Account Type</label>
-                        <select class="form-select" id="user_type" name="user_type" required>
-                            <option value="">Select account type</option>
-                            <option value="student">Student</option>
-                            <option value="teacher">Teacher</option>
-                        </select>
-                    </div>
-                    
-                    <div id="studentFields" style="display: none;">
-                        <div class="mb-3">
-                            <label for="student_id" class="form-label">Student ID</label>
-                            <input type="text" class="form-control" id="student_id" name="student_id">
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="department" class="form-label">Department</label>
-                            <input type="text" class="form-control" id="department" name="department">
-                        </div>
-                    </div>
-                    
-                    <div id="teacherFields" style="display: none;">
-                        <div class="mb-3">
-                            <label for="employee_id" class="form-label">Employee ID</label>
-                            <input type="text" class="form-control" id="employee_id" name="employee_id">
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Phone Number</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                            <input type="tel" class="form-control" id="phone" name="phone">
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label for="profile_picture" class="form-label">Profile Picture (Optional)</label>
-                        <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
-                    </div>
-                    
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
-                        <label class="form-check-label" for="terms">
-                            I agree to the <a href="#" class="text-primary">Terms & Conditions</a>
-                        </label>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-user-plus me-2"></i>Create Account
-                        </button>
-                    </div>
-                </form>
-                
-                <div class="text-center mt-4">
-                    <p class="mb-0">
-                        Already have an account? 
-                        <a href="{% url 'login' %}" class="text-primary">Login here</a>
-                    </p>
+                    {% endif %}
                 </div>
             </div>
         </div>
-    </div>
+
+        <!-- Row: Username + Email -->
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-at"></i></span>
+                        <input type="text" class="form-control" id="username" name="username"
+                               placeholder="Choose a unique username" value="{{ form.username.value|default:'' }}" required>
+                    </div>
+                    <small class="form-text text-muted">Must be unique.</small>
+                    {% if form.username.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.username.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                        <input type="email" class="form-control" id="email" name="email"
+                               placeholder="you@example.com" value="{{ form.email.value|default:'' }}" required>
+                    </div>
+                    {% if form.email.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Row: Password + Confirm Password -->
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="password1">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                        <input type="password" class="form-control" id="password1" name="password1"
+                               placeholder="Min 8 characters" required>
+                        <button class="btn-toggle" type="button" data-toggle-pw="password1" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password1.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.password1.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="password2">Confirm Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-check-circle"></i></span>
+                        <input type="password" class="form-control" id="password2" name="password2"
+                               placeholder="Re-enter password" required>
+                        <button class="btn-toggle" type="button" data-toggle-pw="password2" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    {% if form.password2.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.password2.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Row: Account Type + (Student ID / Employee ID conditional) -->
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="user_type">Account Type</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
+                        <select class="form-select" id="user_type" name="user_type" required>
+                            <option value="">Select account type</option>
+                            <option value="student" {% if form.user_type.value == 'student' %}selected{% endif %}>Student</option>
+                            <option value="teacher" {% if form.user_type.value == 'teacher' %}selected{% endif %}>Teacher</option>
+                        </select>
+                    </div>
+                    {% if form.user_type.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.user_type.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- Conditional: Student ID (visible when Student selected) -->
+                <div id="studentIdField" style="display: {% if form.user_type.value == 'student' %}block{% else %}none{% endif %};">
+                    <div class="form-group">
+                        <label for="student_id">Student ID</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                            <input type="text" class="form-control" id="student_id" name="student_id"
+                                   placeholder="e.g., STU-2024-001" value="{{ form.student_id.value|default:'' }}">
+                        </div>
+                        {% if form.student_id.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.student_id.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Conditional: Employee ID (visible when Teacher selected) -->
+                <div id="employeeIdField" style="display: {% if form.user_type.value == 'teacher' %}block{% else %}none{% endif %};">
+                    <div class="form-group">
+                        <label for="employee_id">Employee ID</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-id-badge"></i></span>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id"
+                                   placeholder="e.g., EMP-2024-012" value="{{ form.employee_id.value|default:'' }}">
+                        </div>
+                        {% if form.employee_id.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.employee_id.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row: Department + Phone (Department visible for both roles) -->
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div id="departmentField">
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-building"></i></span>
+                            <input type="text" class="form-control" id="department" name="department"
+                                   placeholder="Computer Science, Mathematics, etc." value="{{ form.department.value|default:'' }}">
+                        </div>
+                        {% if form.department.errors %}
+                        <div class="text-danger small mt-1">
+                            {% for error in form.department.errors %}{{ error }}{% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                        <input type="tel" class="form-control" id="phone" name="phone"
+                               placeholder="+1 234 567 8900" value="{{ form.phone.value|default:'' }}">
+                    </div>
+                    {% if form.phone.errors %}
+                    <div class="text-danger small mt-1">
+                        {% for error in form.phone.errors %}{{ error }}{% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Picture (full width) -->
+        <div class="form-group">
+            <label for="profile_picture">Profile Picture (Optional)</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-image"></i></span>
+                <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
+            </div>
+            <small class="form-text text-muted">Upload a clear photo for face recognition (JPG, PNG).</small>
+            {% if form.profile_picture.errors %}
+            <div class="text-danger small mt-1">
+                {% for error in form.profile_picture.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Terms & Conditions -->
+        <div class="form-check" style="margin: 16px 0 24px;">
+            <input class="form-check-input" type="checkbox" id="terms" name="terms" required {% if form.terms.value %}checked{% endif %}>
+            <label class="form-check-label" for="terms">
+                I agree to the <a href="#" class="text-primary fw-semibold">Terms &amp; Conditions</a>
+            </label>
+            {% if form.terms.errors %}
+            <div class="text-danger small mt-1">
+                {% for error in form.terms.errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn-login" id="registerBtn">
+            <span class="btn-text">
+                <i class="fas fa-user-plus"></i> Create Account
+            </span>
+            <span class="spinner"></span>
+        </button>
+
+        <!-- Footer -->
+        <div class="auth-footer">
+            Already have an account?
+            <a href="{% url 'login' %}">Sign in here</a>
+        </div>
+
+        
+    </form>
 </div>
 
+<!-- ===== JavaScript for conditional fields & password toggle ===== -->
 <script>
-    document.getElementById('user_type').addEventListener('change', function() {
-        const studentFields = document.getElementById('studentFields');
-        const teacherFields = document.getElementById('teacherFields');
-        
-        studentFields.style.display = 'none';
-        teacherFields.style.display = 'none';
-        
-        if (this.value === 'student') {
-            studentFields.style.display = 'block';
-        } else if (this.value === 'teacher') {
-            teacherFields.style.display = 'block';
+    (function() {
+        'use strict';
+
+        // --- Toggle Student / Teacher fields based on user type ---
+        const userTypeSelect = document.getElementById('user_type');
+        const studentIdField = document.getElementById('studentIdField');
+        const employeeIdField = document.getElementById('employeeIdField');
+
+        function toggleFields() {
+            const val = userTypeSelect.value;
+            if (val === 'student') {
+                studentIdField.style.display = 'block';
+                employeeIdField.style.display = 'none';
+            } else if (val === 'teacher') {
+                studentIdField.style.display = 'none';
+                employeeIdField.style.display = 'block';
+            } else {
+                studentIdField.style.display = 'none';
+                employeeIdField.style.display = 'none';
+            }
         }
-    });
+
+        if (userTypeSelect) {
+            userTypeSelect.addEventListener('change', toggleFields);
+            // Initial state
+            toggleFields();
+        }
+
+        // --- Password visibility toggle for all password fields ---
+        document.querySelectorAll('[data-toggle-pw]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-toggle-pw');
+                const input = document.getElementById(targetId);
+                if (!input) return;
+                const isPassword = input.type === 'password';
+                input.type = isPassword ? 'text' : 'password';
+                const icon = this.querySelector('i');
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
+            });
+        });
+
+        // --- Loading state on form submit ---
+        const form = document.getElementById('registerForm');
+        const registerBtn = document.getElementById('registerBtn');
+
+        if (form && registerBtn) {
+            form.addEventListener('submit', function(e) {
+                if (form.checkValidity()) {
+                    registerBtn.classList.add('loading');
+                    registerBtn.disabled = true;
+                }
+            });
+        }
+
+        // --- Auto-dismiss any error alerts after 6s ---
+        const errorAlert = document.querySelector('.alert-custom');
+        if (errorAlert) {
+            setTimeout(function() {
+                errorAlert.style.transition = 'opacity 0.5s ease';
+                errorAlert.style.opacity = '0';
+                setTimeout(function() {
+                    errorAlert.style.display = 'none';
+                }, 500);
+            }, 6000);
+        }
+    })();
 </script>
 {% endblock %}

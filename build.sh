@@ -30,6 +30,17 @@ else
     export VIRTUAL_ENV="$PWD/.build_venv"
     export PATH="$VIRTUAL_ENV/bin:$PATH"
     PYTHON="$VIRTUAL_ENV/bin/python"
+    PYTHON=".build_venv/bin/python"
+    
+    echo "Installing cmake first using uv..."
+    $UV_CMD pip install cmake==3.31.6
+    
+    echo "Installing requirements.txt using uv..."
+    $UV_CMD pip install -r requirements.txt
+else
+    echo "uv not found. Falling back to standard python venv and pip..."
+    python3 -m venv .build_venv || python -m venv .build_venv
+    PYTHON=".build_venv/bin/python"
     
     $PYTHON -m pip install --upgrade pip
     echo "Installing cmake first via pip..."

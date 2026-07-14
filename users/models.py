@@ -149,7 +149,7 @@ class StudentProfile(models.Model):
 
     batch = models.CharField(
         max_length=10,
-        verbose_name="Batch (e.g., 2024-2028)"
+        verbose_name="Batch (e.g., 2026-2030)"
     )
 
     section = models.CharField(
@@ -313,3 +313,29 @@ class Department(models.Model):
         self.total_students = self.student_set.count()
         self.total_teachers = self.teacher_set.count()
         self.save()
+
+
+# Auto-create StudentProfile when a Student CustomUser is created
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.utils import timezone
+
+@receiver(post_save, sender=CustomUser)
+def create_student_profile(sender, instance, created, **kwargs):
+    if created and instance.user_type == 'student':
+        # Default batch based on joining year
+        join_year = instance.date_joined.year if instance.date_joined else timezone.now().year
+        default_batch = f"{join_year}-{join_year + 4}"
+        
+        # We need a unique roll_number. Try student_id, fallback to username or ID.
+        roll_num = instance.student_id or instance.username
+        
+        StudentProfile.objects.get_or_create(
+            user=instance,
+            defaults={
+                'user_full_name': instance.get_full_name() or instance.username,
+                'roll_number': roll_num,
+                'batch': default_batch,
+                'current_semester': 1,
+            }
+        )
