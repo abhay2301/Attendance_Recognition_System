@@ -23,10 +23,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-7ylr#1w@m0awzp)h1dxob56d6&vwbe#u^h6%k&jl*6ktp5upe0'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Check if we are in a production environment (like Vercel)
+IS_PRODUCTION = os.getenv('VERCEL') == '1' or os.getenv('PRODUCTION', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = not IS_PRODUCTION
+
+if IS_PRODUCTION:
+    ALLOWED_HOSTS = ['*']  # For Vercel, or specify your exact vercel domain e.g. ['your-app.vercel.app']
+else:
+    ALLOWED_HOSTS = []
 
 
 MEDIA_URL = '/media/'
@@ -44,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'crispy_forms',
     'crispy_bootstrap5',
+    'corsheaders',
     'users',
     'attendance',
     'face_app',
@@ -52,7 +59,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -89,12 +98,25 @@ WSGI_APPLICATION = 'attendance_system.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+import dj_database_url
+
+if IS_PRODUCTION and os.getenv('DATABASE_URL'):
+    # Supabase Direct Pool URL
+    DATABASES = {
+        'default': dj_database_url.parse(
+            os.getenv('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # Local SQLite
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -136,6 +158,12 @@ LOGOUT_REDIRECT_URL = '/users/login/'
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] if os.path.exists(os.path.join(BASE_DIR, 'static')) else []
+
+# WhiteNoise settings for static files in production
+if IS_PRODUCTION:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -157,4 +185,11 @@ FACE_RECOGNITION_SETTINGS = {
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
+
+# CORS Configuration
+# In production, it's safer to use CORS_ALLOWED_ORIGINS = ['https://your-frontend-domain.com'] 
+# But for a general Vercel deployment we can allow all origins by default.
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
 
