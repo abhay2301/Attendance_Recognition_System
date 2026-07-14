@@ -6,7 +6,7 @@
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
-<li class="breadcrumb-item"><a href="{% url 'attendance:daily_report' %}">Reports</a></li>
+<li class="breadcrumb-item"><a href="{% url 'reports:daily_report' %}">Reports</a></li>
 <li class="breadcrumb-item active">Daily Report</li>
 {% endblock %}
 
@@ -33,32 +33,60 @@
                 <div class="row">
                     <div class="col-md-3">
                         <div class="card stat-card text-center py-3">
-                            <h6 class="text-muted">Total Students</h6>
-                            <h2 class="fw-bold">145</h2>
+
+                            <h6 class="text-muted">
+                                Total Students Enrolled 
+                            </h6>
+
+                            <h2 class="fw-bold">
+                                {{ total_students|default:0 }}
+                            </h2>
+
                         </div>
                     </div>
-                    
+
+
                     <div class="col-md-3">
                         <div class="card stat-card text-center py-3">
-                            <h6 class="text-muted">Present Today</h6>
-                            <h2 class="fw-bold text-success">132</h2>
-                            <small>90.3%</small>
+
+                            <h6 class="text-muted">
+                                Present Today
+                            </h6>
+
+                            <h2 class="fw-bold text-success">
+                                {{ present_count|default:0 }}
+                            </h2>
+
                         </div>
                     </div>
-                    
+
+
                     <div class="col-md-3">
                         <div class="card stat-card text-center py-3">
-                            <h6 class="text-muted">Absent Today</h6>
-                            <h2 class="fw-bold text-danger">8</h2>
-                            <small>5.5%</small>
+
+                            <h6 class="text-muted">
+                                Absent Today
+                            </h6>
+
+                            <h2 class="fw-bold text-danger">
+                                {{ absent_count|default:0 }}
+                            </h2>
+
                         </div>
                     </div>
-                    
+
+
                     <div class="col-md-3">
                         <div class="card stat-card text-center py-3">
-                            <h6 class="text-muted">Late Arrivals</h6>
-                            <h2 class="fw-bold text-warning">5</h2>
-                            <small>3.4%</small>
+
+                            <h6 class="text-muted">
+                                Late Arrivals
+                            </h6>
+
+                            <h2 class="fw-bold text-warning">
+                                {{ late_count|default:0 }}
+                            </h2>
+
                         </div>
                     </div>
                 </div>
@@ -93,7 +121,7 @@
                                 <td>{{ record.student.student_id }}</td>
                                 <td>
                                     <strong>{{ record.student.get_full_name }}</strong><br>
-                                    <small class="text-muted">{{ record.student.department }}</small>
+                                    
                                 </td>
                                 <td>{{ record.course.course_code }}</td>
                                 <td>{{ record.time_in|time:"H:i:s" }}</td>
@@ -234,32 +262,61 @@
     </div>
 </div>
 
+{{ present_count|default:0|json_script:"present-data" }}
+{{ absent_count|default:0|json_script:"absent-data" }}
+{{ late_count|default:0|json_script:"late-data" }}
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-    // Date picker
-    document.getElementById('date-picker').addEventListener('change', function() {
-        const selectedDate = this.value;
-        // In real app, reload page with selected date
-        window.location.href = `?date=${selectedDate}`;
-    });
-    
-    // Daily chart
-    const dailyCtx = document.getElementById('dailyChart').getContext('2d');
-    const dailyChart = new Chart(dailyCtx, {
+document.addEventListener('DOMContentLoaded', function () {
+
+    const present = JSON.parse(
+        document.getElementById('present-data').textContent
+    );
+
+    const absent = JSON.parse(
+        document.getElementById('absent-data').textContent
+    );
+
+    const late = JSON.parse(
+        document.getElementById('late-data').textContent
+    );
+
+    const canvas = document.getElementById('dailyChart');
+
+    new Chart(canvas, {
         type: 'pie',
+
         data: {
-            labels: ['Present', 'Absent', 'Late'],
+            labels: [
+                'Present',
+                'Absent',
+                'Late'
+            ],
+
             datasets: [{
-                data: [132, 8, 5],
+                data: [
+                    present,
+                    absent,
+                    late
+                ],
+
                 backgroundColor: [
                     '#4caf50',
                     '#f44336',
                     '#ff9800'
-                ]
+                ],
+
+                borderWidth: 1
             }]
         },
+
         options: {
             responsive: true,
+
+            maintainAspectRatio: true,
+
             plugins: {
                 legend: {
                     position: 'bottom'
@@ -267,11 +324,6 @@
             }
         }
     });
-    
-    // Export function
-    function exportReport() {
-        // In real app, generate and download PDF
-        alert('Report exported as PDF!');
-    }
+});
 </script>
 {% endblock %}

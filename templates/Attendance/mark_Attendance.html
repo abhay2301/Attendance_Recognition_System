@@ -33,8 +33,7 @@
             {% if request.user.user_type == 'teacher' %}
             <button
                 class="btn btn-success"
-                data-bs-toggle="modal"
-                data-bs-target="#registerFaceModal">
+                onclick="location.href='{% url 'face_app:register_face' %}'">
                 <i class="fas fa-user-plus me-1"></i>
                 Register Student Face
             </button>

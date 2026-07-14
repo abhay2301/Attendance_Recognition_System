@@ -35,7 +35,7 @@ class CustomUserAdmin(UserAdmin):
         ('Important Dates', {'fields': ('last_login', 'date_joined', 'created_at', 'updated_at')}),
     )
     
-    readonly_fields = ('last_login', 'date_joined', 'created_at', 'updated_at')
+    readonly_fields = ('last_login', 'date_joined', 'created_at', 'updated_at', 'face_encoding')
     
     add_fieldsets = (
         (None, {
@@ -127,27 +127,83 @@ class TeacherProfileAdmin(admin.ModelAdmin):
     user_full_name.short_description = 'Teacher Name'
 
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ('code', 'name', 'hod', 'total_students', 'total_teachers')
-    list_filter = ('established_date',)
-    search_fields = ('name', 'code', 'hod__username')
-    readonly_fields = ('created_at', 'updated_at', 'total_students', 'total_teachers')
-    
+
+    list_display = (
+        'code',
+        'name',
+        'hod',
+        'total_students',
+        'total_teachers'
+    )
+
+    list_filter = (
+        'established_date',
+    )
+
+    search_fields = (
+        'name',
+        'code',
+        'hod__username'
+    )
+
+    # Only timestamps should be read-only
+    readonly_fields = (
+        'created_at',
+        'updated_at'
+    )
+
     fieldsets = (
-        ('Basic Information', {'fields': (
-            'name', 'code', 'description', 'established_date'
-        )}),
-        ('Head of Department', {'fields': (
-            'hod',
-        )}),
-        ('Statistics', {'fields': (
-            'total_students', 'total_teachers'
-        )}),
-        ('Contact Information', {'fields': (
-            'office_phone', 'email', 'location'
-        )}),
-        ('Timestamps', {'fields': (
-            'created_at', 'updated_at'
-        )}),
+        (
+            'Basic Information',
+            {
+                'fields': (
+                    'name',
+                    'code',
+                    'description',
+                    'established_date'
+                )
+            }
+        ),
+
+        (
+            'Head of Department',
+            {
+                'fields': (
+                    'hod',
+                )
+            }
+        ),
+
+        (
+            'Statistics',
+            {
+                'fields': (
+                    'total_students',
+                    'total_teachers'
+                )
+            }
+        ),
+
+        (
+            'Contact Information',
+            {
+                'fields': (
+                    'office_phone',
+                    'email',
+                    'location'
+                )
+            }
+        ),
+
+        (
+            'Timestamps',
+            {
+                'fields': (
+                    'created_at',
+                    'updated_at'
+                )
+            }
+        ),
     )
 
 admin.site.register(CustomUser, CustomUserAdmin)

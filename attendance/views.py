@@ -94,6 +94,22 @@ def view_attendance(request):
         'course'
     ).order_by('-date', '-time_in')
 
+    if request.user.user_type == 'student':
+        records = records.filter(student=request.user)
+        courses_filter = Course.objects.filter(enrollments__student=request.user, enrollments__is_active=True).distinct()
+        students_filter = CustomUser.objects.filter(id=request.user.id)
+    elif request.user.user_type == 'teacher':
+        teacher_courses = Course.objects.filter(
+            Q(teacher=request.user) |
+            Q(co_teacher=request.user)
+        )
+        records = records.filter(course__in=teacher_courses)
+        courses_filter = teacher_courses
+        students_filter = CustomUser.objects.filter(enrollments__course__in=teacher_courses).distinct()
+    else:
+        courses_filter = Course.objects.all()
+        students_filter = CustomUser.objects.filter(user_type='student')
+
     # Filters
     course = request.GET.get('course')
     student = request.GET.get('student')
@@ -129,10 +145,8 @@ def view_attendance(request):
         'title': 'View Attendance',
         'attendance_records': records,
 
-        'courses': Course.objects.all(),
-        'students': CustomUser.objects.filter(
-            user_type='student'
-        ),
+        'courses': courses_filter,
+        'students': students_filter,
 
         'total_records': records.count(),
         'present_count': records.filter(
