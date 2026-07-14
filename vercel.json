@@ -1,22 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "attendance_system/wsgi.py",
-      "use": "@vercel/python",
-      "config": {
-        "maxLambdaSize": "15mb",
-        "runtime": "python3.10"
-      }
-    },
-    {
-      "src": "build.sh",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "staticfiles"
-      }
+  "buildCommand": "./build.sh",
+  "outputDirectory": "staticfiles",
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.10"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/static/(.*)",
@@ -28,7 +18,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "attendance_system/wsgi.py"
+      "dest": "api/index.py"
     }
   ]
 }
