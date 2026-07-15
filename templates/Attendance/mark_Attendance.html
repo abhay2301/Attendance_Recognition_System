@@ -3,103 +3,304 @@
 
 {% block title %}{{ title }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        --warning-gradient: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+        --info-gradient: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .welcome-banner {
+        background: var(--primary-gradient);
+        border-radius: 20px;
+        padding: 28px 32px;
+        color: #fff;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(118, 75, 162, 0.3);
+    }
+    .welcome-banner::before {
+        content: '';
+        position: absolute;
+        right: -60px;
+        top: -60px;
+        width: 220px;
+        height: 220px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    .welcome-banner .greeting {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        position: relative;
+        z-index: 1;
+    }
+    .welcome-banner .date-info {
+        opacity: 0.9;
+        font-size: 0.95rem;
+        position: relative;
+        z-index: 1;
+    }
+    .btn-banner {
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+    .btn-banner:hover {
+        background: rgba(255, 255, 255, 0.3);
+        color: #fff;
+        transform: translateY(-2px);
+    }
+
+    /* Cards */
+    .content-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        background: #fff;
+    }
+    .content-card .card-header {
+        background: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 16px 16px 0 0 !important;
+        padding: 18px 22px;
+    }
+    .content-card .card-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0;
+    }
+
+    /* Camera */
+    .camera-wrapper {
+        position: relative;
+        max-width: 600px;
+        margin: 0 auto;
+        border-radius: 16px;
+        overflow: hidden;
+        background: #000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    #video, #registerVideo {
+        width: 100%;
+        height: auto;
+        display: block;
+        border: none;
+        border-radius: 16px;
+    }
+    .camera-frame {
+        border: 3px solid var(--primary-gradient);
+        padding: 4px;
+        border-radius: 20px;
+        display: inline-block;
+        background: #fff;
+    }
+
+    /* Form Elements */
+    .form-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #8a94a6;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+    .form-control, .form-select {
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        transition: var(--transition);
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    /* Buttons */
+    .btn {
+        border-radius: 10px;
+        font-weight: 500;
+        padding: 0.6rem 1.4rem;
+        transition: var(--transition);
+    }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { background: var(--primary-gradient); border: none; }
+    .btn-success { background: var(--success-gradient); border: none; }
+    .btn-danger { background: var(--danger-gradient); border: none; }
+    .btn-outline-primary { border: 1px solid #667eea; color: #667eea; }
+    .btn-outline-primary:hover { background: var(--primary-gradient); border-color: transparent; color: #fff; }
+
+    /* Table */
+    .attendance-table {
+        font-size: 14px;
+        margin-bottom: 0;
+    }
+    .attendance-table thead th {
+        background: #f8f9fc;
+        color: #8a94a6;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        border: none;
+        border-bottom: 2px solid #f1f3f9;
+        padding: 16px;
+    }
+    .attendance-table tbody td {
+        vertical-align: middle;
+        padding: 14px 16px;
+        border-color: #f1f3f9;
+    }
+    .attendance-table tbody tr {
+        transition: var(--transition);
+    }
+    .attendance-table tbody tr:hover {
+        background: #f8f9fc;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        text-transform: capitalize;
+    }
+    .status-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    .status-present { background: rgba(17, 153, 142, 0.12); color: #11998e; }
+    .status-absent { background: rgba(235, 51, 73, 0.12); color: #eb3349; }
+    .status-late { background: rgba(247, 151, 30, 0.12); color: #f7971e; }
+
+    /* Modal */
+    .modal-content {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    .modal-header {
+        background: #f8f9fc;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 20px 24px;
+    }
+    .modal-title { font-weight: 600; color: #2d3748; }
+
+    /* Alert custom */
+    .alert-modern {
+        border: none;
+        border-radius: 12px;
+        padding: 16px 20px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
 
-    <div class="toast align-items-center text-white bg-primary border-0 d-none" id="error-toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <!-- Toast Error -->
+    <div class="toast align-items-center text-white bg-danger border-0 d-none" id="error-toast" role="alert" aria-live="assertive" aria-atomic="true" style="position: fixed; top: 20px; right: 20px; z-index: 1050;">
         <div class="d-flex">
             <div class="toast-body">
-            Face is not registered!
+                <i class="fas fa-exclamation-circle me-2"></i> Face is not registered or camera access denied!
             </div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     </div>
 
-    <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- HEADER BANNER -->
+    <div class="welcome-banner d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div>
-            <h2 class="mb-1">Attendance</h2>
-            <p class="text-muted mb-0">
+            <div class="greeting">Face Recognition</div>
+            <div class="date-info">
                 <i class="fas fa-calendar-alt me-2"></i>
                 {{ today|date:"l, F j, Y" }}
-            </p>
+            </div>
         </div>
-
         <div class="d-flex gap-2">
-            <a href="{% url 'attendance:daily_report' %}" class="btn btn-outline-primary">
-        <i class="fas fa-chart-bar me-1"></i> Attendance Report
+            <a href="{% url 'attendance:daily_report' %}" class="btn btn-banner">
+                <i class="fas fa-chart-bar me-1"></i> Attendance Report
             </a>
-
             {% if request.user.user_type == 'teacher' %}
-            <button
-                class="btn btn-success"
-                onclick="location.href='{% url 'face_app:register_face' %}'">
-                <i class="fas fa-user-plus me-1"></i>
-                Register Student Face
+            <button class="btn btn-banner" onclick="location.href='{% url 'face_app:register_face' %}'">
+                <i class="fas fa-user-plus me-1"></i> Register Student
             </button>
             {% endif %}
         </div>
     </div>
 
-
     <!-- FACE RECOGNITION CAMERA -->
-    <div class="card mb-4">
-
+    <div class="card content-card mb-4">
         <div class="card-header">
-            <h5 class="card-title mb-0">
-                <i class="fas fa-camera me-2"></i>Face Recognition Attendance
-            </h5>
+            <h5 class="card-title"><i class="fas fa-camera me-2 text-primary"></i> Face Recognition Attendance</h5>
         </div>
+        <div class="card-body text-center p-4">
+            
+            <div class="camera-wrapper mb-4">
+                <video id="video" width="640" height="480" autoplay></video>
+                <canvas id="canvas" style="display:none;"></canvas>
+            </div>
 
-        <div class="card-body text-center">
-
-            <video id="video" width="500" height="350" autoplay class="border rounded"></video>
-            <canvas id="canvas" style="display:none;"></canvas>
-
-            <div class="row mt-3">
-                <div class="col-md-6">
+            <div class="row mt-3 justify-content-center">
+                <div class="col-md-8">
+                    <label class="form-label">Course Selection</label>
                     <select id="courseSelect" class="form-select">
-                        <option value="">Select Course</option>
+                        <option value="">✨ Auto-Detect Enrolled Courses (Automatic Mode)</option>
                         {% for course in courses %}
-                        <option value="{{ course.id }}">{{ course.course_code }}</option>
+                        <option value="{{ course.id }}">{{ course.course_code }} - {{ course.course_name }}</option>
                         {% endfor %}
                     </select>
-                </div>
-                <div class="col-md-6">
-                    <select id="studentSelect" class="form-select">
-                        <option value="">Select Student</option>
-                        {% for student in students %}
-                        <option value="{{ student.user.id }}">
-                            {{ student.roll_number }} - {{ student.user.get_full_name }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <small class="text-muted d-block mt-2">
+                        Leave on "Auto-Detect" to automatically identify the recognized student's face and mark attendance for their enrolled courses.
+                    </small>
                 </div>
             </div>
-            <br>
-            <button class="btn btn-success" onclick="captureFace()">
-                <i class="fas fa-camera me-1"></i>
-                Mark Attendance
-            </button>
+            
+            <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
+                <button id="captureBtn" class="btn btn-success btn-lg px-4" onclick="captureFace()">
+                    <i class="fas fa-camera me-2"></i> Mark Attendance
+                </button>
+                <button id="autoScanBtn" class="btn btn-outline-primary btn-lg px-4" onclick="toggleAutoScan()">
+                    <i class="fas fa-sync fa-spin d-none me-2" id="autoScanIcon"></i>
+                    <i class="fas fa-magic me-2" id="autoScanStaticIcon"></i>
+                    <span id="autoScanText">Start Auto-Scan</span>
+                </button>
+            </div>
+            
+            <div id="scanStatus" class="alert d-none mt-4 fw-bold alert-modern" role="alert"></div>
 
         </div>
     </div>
 
-
     <!-- ATTENDANCE TABLE -->
-    <div class="card">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">Attendance Records</h5>
-            <span class="badge bg-primary" id="recordCount">{{ attendance_records|length }} records</span>
+    <div class="card content-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title"><i class="fas fa-list me-2 text-success"></i> Today's Attendance Records</h5>
+            <span class="badge bg-light text-dark p-2" id="recordCount" style="font-size: 0.85rem;">{{ attendance_records|length }} records</span>
         </div>
-
         <div class="card-body p-0">
-
             <div class="table-responsive">
-
-                <table class="table table-hover mb-0">
-
-                    <thead class="table-light">
+                <table class="table table-hover attendance-table">
+                    <thead>
                         <tr>
                             <th>Student</th>
                             <th>Student ID</th>
@@ -109,116 +310,85 @@
                             <th>Confidence</th>
                         </tr>
                     </thead>
-
                     <tbody id="attendanceTableBody">
-
                         {% for record in attendance_records %}
-
                         <tr>
-                            <td>{{ record.student.get_full_name }}</td>
-
+                            <td class="fw-bold">{{ record.student.get_full_name }}</td>
                             <td>{{ record.student.student_id }}</td>
-
                             <td>{{ record.time_in|time:"h:i A" }}</td>
-
-                            <td>{{ record.course.course_code }}</td>
-
+                            <td><span class="badge bg-light text-dark">{{ record.course.course_code }}</span></td>
                             <td>
-
                                 {% if record.status == 'present' %}
-                                <span class="badge bg-success">Present</span>
+                                <span class="status-badge status-present">Present</span>
                                 {% elif record.status == 'late' %}
-                                <span class="badge bg-warning">Late</span>
+                                <span class="status-badge status-late">Late</span>
                                 {% else %}
-                                <span class="badge bg-danger">Absent</span>
+                                <span class="status-badge status-absent">Absent</span>
                                 {% endif %}
-
                             </td>
-
                             <td>
-
                                 {% if record.confidence_score %}
-                                {{ record.confidence_score|floatformat:1 }}%
+                                <span class="fw-bold">{{ record.confidence_score|floatformat:1 }}%</span>
                                 {% else %}
-                                Manual
+                                <span class="text-muted">Manual</span>
                                 {% endif %}
-
                             </td>
-
                         </tr>
-
                         {% empty %}
-
                         <tr>
-                            <td colspan="6" class="text-center py-4">
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                                 No attendance records today
                             </td>
                         </tr>
-
                         {% endfor %}
-
                     </tbody>
                 </table>
-
             </div>
         </div>
     </div>
 
 </div>
 
+<!-- REGISTER FACE MODAL -->
 <div class="modal fade" id="registerFaceModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-
             <div class="modal-header">
-                <h5 class="modal-title">Register Student Face</h5>
-
-                <button
-                    type="button"
-                    class="btn-close"
-                    data-bs-dismiss="modal">
-                </button>
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2 text-primary"></i> Register Student Face</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <div class="mb-3">
-    <label class="form-label">Select Student</label>
+                    <label class="form-label">Select Student</label>
+                    <select id="studentSelect" class="form-select">
+                        <option value="">Select Student</option>
+                        {% for student in students %}
+                        <option value="{{ student.user.id }}">
+                            {{ student.roll_number }} - {{ student.user_full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-    <select id="studentSelect" class="form-select">
-        <option value="">Select Student</option>
+                <div class="text-center bg-light p-3 rounded mb-3">
+                    <video id="registerVideo" width="320" height="240" autoplay style="max-width: 100%; border-radius: 12px; border: 2px solid #e2e8f0;"></video>
+                    <canvas id="registerCanvas" style="display:none;"></canvas>
+                </div>
 
-        {% for student in students %}
-        <option value="{{ student.user.id }}">
-            {{ student.roll_number }} -
-            {{ student.user_full_name }}
-        </option>
-        {% endfor %}
-    </select>
-</div>
+                <div class="text-center mt-3">
+                    <p id="captureCount" class="fw-bold text-muted mb-2">Captures: 0 / 5</p>
+                    
+                    <!-- Added a visual progress bar for better UX -->
+                    <div class="progress mb-3" style="height: 6px; border-radius: 10px;">
+                        <div class="progress-bar bg-primary" id="captureProgress" role="progressbar" style="width: 0%; transition: width 0.3s ease;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="5"></div>
+                    </div>
 
-<div class="text-center">
-    <video id="registerVideo"
-           width="350"
-           height="250"
-           autoplay
-           class="border rounded">
-    </video>
-
-    <canvas id="registerCanvas" style="display:none;"></canvas>
-</div>
-
-<div class="text-center mt-3">
-    <p id="captureCount" class="fw-bold">
-    Captures: 0 / 5
-    </p>
-
-    <button class="btn btn-primary"
-            onclick="registerStudentFace()">
-        Capture Face
-    </button>
-</div>
+                    <button class="btn btn-primary" onclick="registerStudentFace()">
+                        <i class="fas fa-camera me-2"></i> Capture Face
+                    </button>
+                </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -226,221 +396,218 @@
 {% endblock %}
 
 
-
 {% block extra_js %}
 
 <script>
-
     let registerStream = null;
+    const registerModal = document.getElementById('registerFaceModal');
 
-const registerModal = document.getElementById('registerFaceModal');
-
-registerModal.addEventListener('shown.bs.modal', async () => {
-
-    try {
-
-        registerStream = await navigator.mediaDevices.getUserMedia({
-            video: true
-        });
-
-        document.getElementById('registerVideo').srcObject = registerStream;
-
-    }
-    catch(err){
-        console.log(err);
-        document.getElementById('error-toast').classList.remove('d-none');
-    }
-
-});
-
-registerModal.addEventListener('hidden.bs.modal', () => {
-
-    if(registerStream){
-        registerStream.getTracks().forEach(track => track.stop());
-    }
-
-});
-    let capturedImages = [];
-    function registerStudentFace() {
-
-    const studentId = document.getElementById('studentSelect').value;
-
-    if(!studentId){
-        alert("Please select a student");
-        return;
-    }
-
-    const video = document.getElementById("registerVideo");
-    const canvas = document.getElementById("registerCanvas");
-
-    const context = canvas.getContext("2d");
-
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-
-    context.drawImage(video, 0, 0);
-
-    const image = canvas.toDataURL("image/jpeg");
-
-    capturedImages.push(image);
-
-    document.getElementById("captureCount").innerHTML =
-        `Captures: ${capturedImages.length} / 5`;
- // wait until we have 5 images are captured
-    if (capturedImages.length < 5) {
-        return;
-    }
-
-    fetch("{% url 'face_app:register_face_from_attendance' %}", {
-
-        method: "POST",
-
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken
-        },
-
-        body: JSON.stringify({
-            user_id: studentId,
-            images: capturedImages
-        })
-
-    })
-    .then(res => res.json())
-    .then(data => {
-
-        if(data.success){
-
-            alert("5 Face Images registered successfully");
-
-            location.reload();
-
-        }else{
-
-            alert(data.error);
-
+    registerModal.addEventListener('shown.bs.modal', async () => {
+        try {
+            registerStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('registerVideo').srcObject = registerStream;
         }
-
+        catch(err) {
+            console.log(err);
+            const errorToast = new bootstrap.Toast(document.getElementById('error-toast'));
+            errorToast.show();
+        }
     });
 
-}
+    registerModal.addEventListener('hidden.bs.modal', () => {
+        if(registerStream){
+            registerStream.getTracks().forEach(track => track.stop());
+        }
+    });
 
+    let capturedImages = [];
+    function registerStudentFace() {
+        const studentId = document.getElementById('studentSelect').value;
 
-
-    function getCookie(name) {
-
-        let cookieValue = null;
-
-        if (document.cookie && document.cookie !== '') {
-
-            const cookies = document.cookie.split(';');
-
-            for (let i = 0; i < cookies.length; i++) {
-
-                const cookie = cookies[i].trim();
-
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-
-                    break;
-
-                }
-
-            }
-
+        if(!studentId){
+            alert("Please select a student");
+            return;
         }
 
-        return cookieValue;
-
-    }
-
-    const csrfToken = getCookie('csrftoken');
-
-    const video = document.getElementById("video");
-
-
-    navigator.mediaDevices.getUserMedia({ video: true })
-
-        .then(stream => {
-
-            video.srcObject = stream;
-
-        })
-
-        .catch(err => console.log("Camera error:", err));
-
-
-
-    function captureFace() {
-
-        const canvas = document.getElementById("canvas");
-
+        const video = document.getElementById("registerVideo");
+        const canvas = document.getElementById("registerCanvas");
         const context = canvas.getContext("2d");
 
         canvas.width = video.videoWidth;
-
         canvas.height = video.videoHeight;
-
         context.drawImage(video, 0, 0);
 
         const image = canvas.toDataURL("image/jpeg");
+        capturedImages.push(image);
 
-        const course_id = document.getElementById("courseSelect").value;
+        document.getElementById("captureCount").innerHTML = `Captures: ${capturedImages.length} / 5`;
+        
+        // Update visual progress bar
+        const progress = (capturedImages.length / 5) * 100;
+        document.getElementById('captureProgress').style.width = `${progress}%`;
 
-        if (!course_id) {
-
-            alert("Please select course");
-
+        if (capturedImages.length < 5) {
             return;
-
         }
 
-
-        fetch("{% url 'face_app:mark_attendance_api' %}", {
-
+        fetch("{% url 'face_app:register_face_from_attendance' %}", {
             method: "POST",
-
             headers: {
-
                 "Content-Type": "application/json",
-
                 "X-CSRFToken": csrfToken
-
             },
-
             body: JSON.stringify({
-
-                image: image,
-
-                course_id: course_id
-
+                user_id: studentId,
+                images: capturedImages
             })
-
         })
-
-            .then(res => res.json())
-
-            .then(data => {
-
-                if (data.success) {
-
-                    alert("Attendance marked for " + data.user_name);
-
-                    location.reload();
-
-                }
-
-                else {
-
-                    alert(data.error);
-
-                }
-
-            });
-
+        .then(res => res.json())
+        .then(data => {
+            if(data.success){
+                alert("5 Face Images registered successfully");
+                location.reload();
+            } else {
+                alert(data.error);
+                // Reset captures on failure
+                capturedImages = [];
+                document.getElementById("captureCount").innerHTML = "Captures: 0 / 5";
+                document.getElementById('captureProgress').style.width = '0%';
+            }
+        });
     }
 
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrfToken = getCookie('csrftoken');
+    const video = document.getElementById("video");
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+        })
+        .catch(err => {
+            console.log("Camera error:", err);
+            const errorToast = new bootstrap.Toast(document.getElementById('error-toast'));
+            errorToast.show();
+        });
+
+    function captureFace(isAuto = false) {
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        const image = canvas.toDataURL("image/jpeg");
+        const course_id = document.getElementById("courseSelect").value;
+
+        if (!isAuto) {
+            const captureBtn = document.getElementById("captureBtn");
+            if (captureBtn) captureBtn.disabled = true;
+        }
+
+        fetch("{% url 'face_app:mark_attendance_api' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": csrfToken
+            },
+            body: JSON.stringify({
+                image: image,
+                course_id: course_id
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const statusDiv = document.getElementById("scanStatus");
+            if (data.success) {
+                if (statusDiv) {
+                    statusDiv.className = "alert alert-success mt-4 fw-bold alert-modern";
+                    statusDiv.innerHTML = `<i class="fas fa-check-circle me-2"></i> ${data.message} (Confidence: ${data.confidence}%)`;
+                    statusDiv.classList.remove("d-none");
+                }
+                if (!isAuto) {
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    setTimeout(() => location.reload(), 2500);
+                }
+            } else {
+                if (statusDiv) {
+                    if (!isAuto || data.error !== 'No face recognized. Please try again.') {
+                        statusDiv.className = "alert alert-warning mt-4 fw-bold alert-modern";
+                        statusDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-2"></i> ${data.error}`;
+                        statusDiv.classList.remove("d-none");
+                    }
+                }
+                if (!isAuto) {
+                    const captureBtn = document.getElementById("captureBtn");
+                    if (captureBtn) captureBtn.disabled = false;
+                }
+            }
+        })
+        .catch(err => {
+            if (!isAuto) {
+                const statusDiv = document.getElementById("scanStatus");
+                if(statusDiv) {
+                    statusDiv.className = "alert alert-danger mt-4 fw-bold alert-modern";
+                    statusDiv.innerHTML = `<i class="fas fa-times-circle me-2"></i> Error communicating with server: ${err}`;
+                    statusDiv.classList.remove("d-none");
+                }
+                const captureBtn = document.getElementById("captureBtn");
+                if (captureBtn) captureBtn.disabled = false;
+            }
+        });
+    }
+
+    let autoScanInterval = null;
+    function toggleAutoScan() {
+        const autoScanBtn = document.getElementById("autoScanBtn");
+        const autoScanIcon = document.getElementById("autoScanIcon");
+        const autoScanStaticIcon = document.getElementById("autoScanStaticIcon");
+        const autoScanText = document.getElementById("autoScanText");
+        const statusDiv = document.getElementById("scanStatus");
+
+        if (autoScanInterval) {
+            clearInterval(autoScanInterval);
+            autoScanInterval = null;
+            autoScanBtn.className = "btn btn-outline-primary btn-lg px-4";
+            autoScanIcon.classList.add("d-none");
+            autoScanStaticIcon.classList.remove("d-none");
+            autoScanText.innerText = "Start Auto-Scan";
+            if (statusDiv) {
+                statusDiv.className = "alert alert-info mt-4 fw-bold alert-modern";
+                statusDiv.innerHTML = `<i class="fas fa-info-circle me-2"></i> Auto-Scan stopped.`;
+                statusDiv.classList.remove("d-none");
+            }
+        } else {
+            autoScanBtn.className = "btn btn-primary btn-lg px-4";
+            autoScanIcon.classList.remove("d-none");
+            autoScanStaticIcon.classList.add("d-none");
+            autoScanText.innerText = "Stop Auto-Scan";
+            if (statusDiv) {
+                statusDiv.className = "alert alert-info mt-4 fw-bold alert-modern";
+                statusDiv.innerHTML = `<i class="fas fa-spinner fa-spin me-2"></i> Auto-Scan active... Looking for registered student faces automatically every 3 seconds.`;
+                statusDiv.classList.remove("d-none");
+            }
+            autoScanInterval = setInterval(() => {
+                if (video && video.readyState === 4) {
+                    captureFace(true);
+                }
+            }, 3000);
+        }
+    }
 </script>
 
 {% endblock %}

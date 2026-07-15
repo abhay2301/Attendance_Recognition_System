@@ -32,15 +32,40 @@ def register(request):
 
 @login_required
 def profile(request):
+    if request.method == 'POST':
+        u_form = UserUpdateForm(request.POST, instance=request.user)
+        p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user)
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            # Synchronize Person model
+            Person.objects.filter(created_by=request.user).update(
+                name=request.user.get_full_name() or request.user.username,
+                email=request.user.email
+            )
+            Person.objects.filter(email=request.user.email).update(
+                name=request.user.get_full_name() or request.user.username
+            )
+            messages.success(request, 'Your profile has been updated successfully!')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Please check the form for errors.')
+    else:
+        u_form = UserUpdateForm(instance=request.user)
+        p_form = ProfileUpdateForm(instance=request.user)
+
     # Get or create Person for the user
     try:
         person = Person.objects.get(email=request.user.email)
     except Person.DoesNotExist:
-        person = Person.objects.create(
-            name=request.user.get_full_name() or request.user.username,
-            email=request.user.email,
-            created_by=request.user
-        )
+        try:
+            person = Person.objects.get(created_by=request.user)
+        except Person.DoesNotExist:
+            person = Person.objects.create(
+                name=request.user.get_full_name() or request.user.username,
+                email=request.user.email,
+                created_by=request.user
+            )
     
     # Get face images
     face_images = FaceImage.objects.filter(person_id=person).order_by('-created_at')
@@ -52,6 +77,8 @@ def profile(request):
     attendance_records = Attendance.objects.filter(student=request.user).order_by('-date')[:10]
     
     context = {
+        'u_form': u_form,
+        'p_form': p_form,
         'face_images': face_images,
         'recognition_logs': recognition_logs,
         'attendance_records': attendance_records,

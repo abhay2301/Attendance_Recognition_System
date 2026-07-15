@@ -14,128 +14,240 @@
     
     <style>
         :root {
-            --primary-color: #4361ee;
-            --secondary-color: #3a0ca3;
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
             --accent-color: #4cc9f0;
-            --light-color: #f8f9fa;
-            --dark-color: #212529;
-            --success-color: #4caf50;
-            --warning-color: #ff9800;
-            --danger-color: #f44336;
+            --light-color: #f8f9fc;
+            --dark-color: #1e293b;
+            --success-color: #11998e;
+            --warning-color: #f7971e;
+            --danger-color: #eb3349;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --sidebar-gradient: linear-gradient(165deg, #1e293b 0%, #0f172a 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            --warning-gradient: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+            --info-gradient: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Poppins', sans-serif;
             background-color: #f5f7fb;
-            color: #333;
+            color: #334155;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        /* Navbar Glassmorphism */
+        .navbar {
+            background: rgba(255, 255, 255, 0.88) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            transition: var(--transition);
+            padding: 12px 0;
+        }
+        .navbar.navbar-scrolled {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            padding: 8px 0;
         }
         
         .navbar-brand {
             font-weight: 700;
-            color: var(--primary-color) !important;
+            font-size: 1.35rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
         }
         
+        /* Sidebar Styling */
         .sidebar {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            min-height: 100vh;
-            box-shadow: 3px 0 10px rgba(0,0,0,0.1);
+            background: var(--sidebar-gradient);
+            min-height: calc(100vh - 65px);
+            box-shadow: 4px 0 25px rgba(0,0,0,0.15);
+            position: sticky;
+            top: 65px;
+            height: calc(100vh - 65px);
+            overflow-y: auto;
+            z-index: 1020;
+            padding-bottom: 30px;
         }
         
         .sidebar .nav-link {
-            color: white;
-            padding: 12px 20px;
-            margin: 5px 0;
-            border-radius: 8px;
-            transition: all 0.3s;
+            color: rgba(255, 255, 255, 0.75);
+            padding: 12px 18px;
+            margin: 4px 12px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 0.92rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
         }
         
         .sidebar .nav-link:hover {
-            background: rgba(255,255,255,0.15);
-            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            transform: translateX(4px);
         }
         
         .sidebar .nav-link.active {
-            background: rgba(255,255,255,0.2);
-            border-left: 4px solid var(--accent-color);
+            background: var(--primary-gradient);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
         }
         
         .sidebar .nav-link i {
-            width: 25px;
+            width: 28px;
+            font-size: 1.1rem;
             text-align: center;
         }
+
+        .sidebar .profile-section {
+            padding: 20px 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 15px;
+        }
+
+        .user-avatar-ring {
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            padding: 3px;
+            transition: var(--transition);
+        }
+        .user-avatar-ring:hover {
+            border-color: var(--accent-color);
+            transform: scale(1.05);
+        }
         
+        /* Main Content Animation */
+        .main-wrapper {
+            padding: 28px 36px;
+            min-height: calc(100vh - 65px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .content {
+            animation: fadeInSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeInSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Cards & Components */
         .card {
             border: none;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: transform 0.3s;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            background: #ffffff;
         }
         
         .card:hover {
-            transform: translateY(-5px);
+            box-shadow: var(--card-shadow-hover);
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: var(--primary-gradient);
             border: none;
-            border-radius: 8px;
-            padding: 10px 25px;
+            border-radius: 10px;
+            padding: 10px 24px;
             font-weight: 500;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+            transition: var(--transition);
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+            box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
         }
         
+        /* Stat Cards */
         .stat-card {
-            border-left: 4px solid var(--primary-color);
+            border-radius: 16px;
+            border: none;
+            overflow: hidden;
+            position: relative;
         }
         
-        .stat-card.present {
-            border-left-color: var(--success-color);
-        }
-        
-        .stat-card.absent {
-            border-left-color: var(--danger-color);
-        }
-        
-        .stat-card.late {
-            border-left-color: var(--warning-color);
-        }
+        .stat-card.present { border-top: 4px solid var(--success-color); }
+        .stat-card.absent { border-top: 4px solid var(--danger-color); }
+        .stat-card.late { border-top: 4px solid var(--warning-color); }
         
         .camera-container {
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
         }
         
-        .table thead {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
+        /* Alerts / Toasts */
+        .alert {
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            animation: fadeInSlideUp 0.3s ease forwards;
         }
+
+        .alert-success { background: rgba(17, 153, 142, 0.12); color: #0d7a71; }
+        .alert-danger, .alert-error { background: rgba(235, 51, 73, 0.12); color: #c82333; }
+        .alert-warning { background: rgba(247, 151, 30, 0.15); color: #b86e00; }
+        .alert-info { background: rgba(33, 147, 176, 0.12); color: #176a7f; }
         
-        .table tbody tr:hover {
-            background-color: rgba(67, 97, 238, 0.05);
-        }
-        
-        .badge-present {
-            background-color: var(--success-color);
-        }
-        
-        .badge-absent {
-            background-color: var(--danger-color);
-        }
-        
-        .badge-late {
-            background-color: var(--warning-color);
-        }
-        
+        /* Footer */
         .footer {
             background-color: var(--dark-color);
-            color: white;
-            padding: 20px 0;
-            margin-top: 40px;
+            color: #94a3b8;
+            padding: 30px 0 20px 0;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.9rem;
+            margin-top: auto;
+        }
+        .footer h5 {
+            color: #ffffff;
+            font-weight: 600;
         }
     </style>
     
@@ -182,90 +294,88 @@
         </div>
     </nav>
 
-    <div class="container-fluid">
-        <div class="row">
+    <div class="container-fluid p-0">
+        <div class="row g-0">
             {% if user.is_authenticated %}
             <!-- Sidebar -->
             <div class="col-md-2 sidebar d-none d-md-block">
-                <div class="position-sticky pt-4">
-                    <div class="text-center mb-4">
-                        <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=random{% endif %}" 
-                             class="rounded-circle mb-3" width="80" height="80" alt="Profile">
-                        <h6 class="text-white mb-1">{{ user.get_full_name|default:user.username }}</h6>
-                        <small class="text-light">{{ user.get_user_type_display }}</small>
-                    </div>
+                <div class="profile-section text-center">
+                    <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=random{% endif %}" 
+                         class="rounded-circle mb-3 user-avatar-ring shadow" width="76" height="76" alt="Profile">
+                    <h6 class="text-white mb-1 fw-bold">{{ user.get_full_name|default:user.username }}</h6>
+                    <span class="badge bg-primary px-3 py-1 rounded-pill mt-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">{{ user.get_user_type_display|upper }}</span>
+                </div>
+                
+                <ul class="nav flex-column mb-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                        </a>
+                    </li>
+
+                    {% if user.user_type == 'teacher' %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'mark-attendance' in request.path %}active{% endif %}" href="{% url 'attendance:mark_Attendance' %}">
+                            <i class="fas fa-camera me-2"></i> Mark Attendance
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'view-attendance' in request.path %}active{% endif %}" href="{% url 'attendance:view_Attendance' %}">
+                            <i class="fas fa-clipboard-list me-2"></i> View Attendance
+                        </a>
+                    </li>
+                    {% if user.user_type == 'teacher' %}
+                    {% if not user.is_face_registered %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'register-face' in request.path %}active{% endif %}" href="{% url 'face_app:register_face' %}">
+                            <i class="fas fa-user-plus me-2"></i> Register Face
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
                     
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
-                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                            </a>
-                        </li>
-
-                        {% if user.user_type == 'teacher' %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'mark-attendance' in request.path %}active{% endif %}" href="{% url 'attendance:mark_Attendance' %}">
-                                <i class="fas fa-camera me-2"></i> Mark Attendance
-                            </a>
-                        </li>
-                        {% endif %}
-
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'view-attendance' in request.path %}active{% endif %}" href="{% url 'attendance:view_Attendance' %}">
-                                <i class="fas fa-clipboard-list me-2"></i> View Attendance
-                            </a>
-                        </li>
-                        {% if user.user_type == 'teacher' %}
-                        {% if not user.is_face_registered %}
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'register-face' in request.path %}active{% endif %}" href="{% url 'face_app:register_face' %}">
-                                <i class="fas fa-user-plus me-2"></i> Register Face
-                            </a>
-                        </li>
-                        {% endif %}
-                        {% endif %}
-                        
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'course' in request.path %}active{% endif %}" href="{% url 'attendance:course_list' %}">
-                                <i class="fas fa-book me-2"></i> Courses
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'report' in request.path %}active{% endif %}" href="{% url 'reports:daily_report' %}">
-                                <i class="fas fa-chart-bar me-2"></i> Reports
-                            </a>
-                        </li>
-                        
-
-                        {% if user.is_staff %}
-                        <li class="nav-item mt-4">
-                            <a class="nav-link {% if 'admin' in request.path %}active{% endif %}" href="{% url 'admin:index' %}">
-                                <i class="fas fa-cog me-2"></i> Admin Panel
-                            </a>
-                        </li>
-                        {% endif %}
-                    </ul>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'course' in request.path %}active{% endif %}" href="{% url 'attendance:course_list' %}">
+                            <i class="fas fa-book me-2"></i> Courses
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if 'report' in request.path %}active{% endif %}" href="{% url 'reports:daily_report' %}">
+                            <i class="fas fa-chart-bar me-2"></i> Reports
+                        </a>
+                    </li>
                     
-                    <div class="mt-5 px-3">
-                        <div class="card bg-dark text-white">
-                            <div class="card-body p-3">
-                                <small class="d-block mb-2">Face Status:</small>
-                                {% if user.is_face_registered %}
-                                <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Registered</span>
-                                {% else %}
-                                <span class="badge bg-warning"><i class="fas fa-exclamation-circle me-1"></i> Not Registered</span>
-                                {% endif %}
-                            </div>
+
+                    {% if user.is_staff %}
+                    <li class="nav-item mt-3 pt-3 border-top border-secondary border-opacity-25">
+                        <a class="nav-link {% if 'admin' in request.path %}active{% endif %}" href="{% url 'admin:index' %}">
+                            <i class="fas fa-cog me-2"></i> Admin Panel
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <div class="mt-4 px-3">
+                    <div class="card bg-white bg-opacity-10 text-white border border-white border-opacity-10 shadow-sm" style="backdrop-filter: blur(8px); border-radius: 14px;">
+                        <div class="card-body p-3 text-center">
+                            <small class="d-block mb-2 text-light opacity-75 fw-medium text-uppercase" style="font-size: 0.7rem;">Biometric Security</small>
+                            {% if user.is_face_registered %}
+                            <span class="badge bg-success px-3 py-2 w-100 rounded-pill shadow-sm"><i class="fas fa-check-circle me-1"></i> Face Registered</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark px-3 py-2 w-100 rounded-pill shadow-sm"><i class="fas fa-exclamation-circle me-1"></i> Not Registered</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
             
             <!-- Main Content -->
-            <div class="col-md-10">
+            <div class="col-md-10 main-wrapper">
             {% else %}
             <!-- Full width for non-authenticated users -->
-            <div class="col-12">
+            <div class="col-12 main-wrapper">
             {% endif %}
             
                 <!-- Messages -->
@@ -327,6 +437,37 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     
+    <script>
+        // Navbar scroll shadow
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (navbar) {
+                if (window.scrollY > 20) {
+                    navbar.classList.add('navbar-scrolled');
+                } else {
+                    navbar.classList.remove('navbar-scrolled');
+                }
+            }
+        });
+
+        // Auto dismiss alert messages after 5 seconds
+        document.addEventListener("DOMContentLoaded", function() {
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert-dismissible');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+
+            // Initialize Bootstrap tooltips if present
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

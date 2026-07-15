@@ -74,7 +74,7 @@ def mark_attendance_view(request):
 
     return render(
         request,
-        'face_recognition/mark_attendance.html',
+        'Attendance/mark_Attendance.html',
         context
     )
 
@@ -162,8 +162,9 @@ def mark_attendance_api(request):
         if not image_base64:
             return JsonResponse({'success': False, 'error': 'No image provided'})
         
-        if not course_id:
-            return JsonResponse({'success': False, 'error': 'No course selected'})
+        # course_id can be optional (auto-detect from student's enrollments)
+        # if not course_id:
+        #     return JsonResponse({'success': False, 'error': 'No course selected'})
         
         # Convert base64 to numpy array
         img_data = base64.b64decode(image_base64.split(',')[1])
@@ -218,57 +219,101 @@ def mark_attendance_api(request):
                 'error': 'Face encoding not found.'
             })
         
-        course = get_object_or_404(Course, id=course_id)
-        
-        # Check if attendance already marked today
-        today = datetime.now().date()
-        existing_attendance = Attendance.objects.filter(
-            student=user,
-            course=course,
-            date=today
-        ).first()
-        
-        if existing_attendance:
-            # Update time out
-            existing_attendance.time_out = datetime.now().time()
-            existing_attendance.save()
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'Attendance updated for {user.get_full_name()}',
-                'user_name': user.get_full_name(),
-                'student_id': user.student_id,
-                'confidence': recognition_result['confidence'],
-                'action': 'time_out'
-            })
+        from attendance.models import Enrollment
+        from django.db.models import Q
+
+        display_name = user.get_full_name()
+        if not display_name and hasattr(user, 'students') and user.students.exists():
+            display_name = user.students.first().user_full_name
+        if not display_name:
+            display_name = user.username
+
+        courses_to_mark = []
+        if course_id:
+            course = get_object_or_404(Course, id=course_id)
+            # Verify student is enrolled in this course
+            is_enrolled = Enrollment.objects.filter(student=user, course=course, is_active=True, course__is_active=True).exists()
+            if not is_enrolled:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Recognized student {display_name} ({user.student_id or user.username}) is NOT enrolled in {course.course_code}. Attendance cannot be marked.'
+                })
+            courses_to_mark = [course]
         else:
-            # Create new attendance record
-            attendance = Attendance.objects.create(
+            # Automatically detect active enrolled courses for this student
+            enrollments = Enrollment.objects.filter(student=user, is_active=True, course__is_active=True).select_related('course', 'course__teacher', 'course__co_teacher')
+            
+            # If a teacher is marking, prefer courses taught by this teacher, but fallback if needed
+            if request.user.user_type == 'teacher':
+                teacher_enrollments = enrollments.filter(Q(course__teacher=request.user) | Q(course__co_teacher=request.user))
+                if teacher_enrollments.exists():
+                    enrollments = teacher_enrollments
+            
+            if not enrollments.exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Recognized student {display_name} ({user.student_id or user.username}) is not enrolled in any active courses.'
+                })
+            
+            courses_to_mark = [e.course for e in enrollments]
+        
+        today = datetime.now().date()
+        marked_courses = []
+        any_marked = False
+        latest_action = 'time_in'
+
+        for course in courses_to_mark:
+            existing_attendance = Attendance.objects.filter(
                 student=user,
                 course=course,
-                date=today,
-                time_in=datetime.now().time(),
-                marked_by=request.user,
-                confidence_score=recognition_result['confidence'],
-                status='present'
-            )
+                date=today
+            ).first()
             
-            # Save face image
-            img_filename = f'attendance_{user.id}_{int(time.time())}.jpg'
-            img_path = os.path.join(settings.MEDIA_ROOT, 'attendance_images', img_filename)
-            os.makedirs(os.path.dirname(img_path), exist_ok=True)
-            cv2.imwrite(img_path, img)
-            attendance.face_image = f'attendance_images/{img_filename}'
-            attendance.save()
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'Attendance marked for {user.get_full_name()}',
-                'user_name': user.get_full_name(),
-                'student_id': user.student_id,
-                'confidence': recognition_result['confidence'],
-                'action': 'time_in'
-            })
+            if existing_attendance:
+                # Update time out
+                existing_attendance.time_out = datetime.now().time()
+                existing_attendance.save()
+                marked_courses.append(f'{course.course_code}')
+                latest_action = 'time_out'
+            else:
+                # Create new attendance record
+                attendance = Attendance.objects.create(
+                    student=user,
+                    course=course,
+                    date=today,
+                    time_in=datetime.now().time(),
+                    marked_by=request.user,
+                    confidence_score=recognition_result['confidence'],
+                    status='present'
+                )
+                
+                # Save face image
+                img_filename = f'attendance_{user.id}_{int(time.time())}_{course.id}.jpg'
+                img_path = os.path.join(settings.MEDIA_ROOT, 'attendance_images', img_filename)
+                os.makedirs(os.path.dirname(img_path), exist_ok=True)
+                cv2.imwrite(img_path, img)
+                attendance.face_image = f'attendance_images/{img_filename}'
+                attendance.save()
+                
+                marked_courses.append(f'{course.course_code}')
+                any_marked = True
+                latest_action = 'time_in'
+
+        courses_str = ", ".join(marked_courses)
+        if any_marked:
+            msg = f'Attendance automatically marked for {display_name} ({user.student_id or user.username}) in enrolled course(s): {courses_str}'
+        else:
+            msg = f'Attendance updated (Time Out) for {display_name} ({user.student_id or user.username}) in enrolled course(s): {courses_str}'
+
+        return JsonResponse({
+            'success': True,
+            'message': msg,
+            'user_name': display_name,
+            'student_id': user.student_id or user.username,
+            'confidence': recognition_result['confidence'],
+            'action': latest_action,
+            'courses': marked_courses
+        })
             
     except Exception as e:
         return JsonResponse({

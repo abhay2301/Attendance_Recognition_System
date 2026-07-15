@@ -9,124 +9,483 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <!-- Stats Cards -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card present">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-muted">Today's Present</h6>
-                        <h3 class="fw-bold">{{ present_percentage }}%</h3>
-                        <p class="mb-0"><span class="text-success">+2.5%</span> from yesterday</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-user-check fa-3x text-success"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        --warning-gradient: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+        --info-gradient: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+        --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        --card-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Welcome Banner */
+    .welcome-banner {
+        background: var(--primary-gradient);
+        border-radius: 20px;
+        padding: 28px 32px;
+        color: #fff;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(118, 75, 162, 0.3);
+    }
+    .welcome-banner::before {
+        content: '';
+        position: absolute;
+        right: -60px;
+        top: -60px;
+        width: 220px;
+        height: 220px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+    }
+    .welcome-banner::after {
+        content: '';
+        position: absolute;
+        right: 40px;
+        bottom: -80px;
+        width: 160px;
+        height: 160px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 50%;
+    }
+    .welcome-banner .greeting {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        position: relative;
+        z-index: 1;
+    }
+    .welcome-banner .date-info {
+        opacity: 0.9;
+        font-size: 0.95rem;
+        position: relative;
+        z-index: 1;
+    }
+    .welcome-banner .live-clock {
+        background: rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(10px);
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.4rem;
+        position: relative;
+        z-index: 1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        overflow: hidden;
+        position: relative;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--card-shadow-hover);
+    }
+    .stat-card .icon-wrap {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 1.75rem;
+    }
+    .stat-card.present .icon-wrap { background: var(--success-gradient); }
+    .stat-card.absent .icon-wrap { background: var(--danger-gradient); }
+    .stat-card.rate .icon-wrap { background: var(--info-gradient); }
+    .stat-card .stat-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    .stat-card .progress {
+        height: 6px;
+        border-radius: 10px;
+        margin-top: 12px;
+        background: rgba(0, 0, 0, 0.06);
+    }
+    .stat-card .progress-bar {
+        border-radius: 10px;
+        transition: width 1.2s ease;
+    }
+
+    /* Circular Progress */
+    .circular-progress {
+        width: 110px;
+        height: 110px;
+        position: relative;
+    }
+    .circular-progress svg {
+        transform: rotate(-90deg);
+    }
+    .circular-progress .track {
+        stroke: rgba(0, 0, 0, 0.06);
+    }
+    .circular-progress .indicator {
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1.4s ease;
+    }
+    .circular-progress .value {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        font-weight: 700;
+    }
+
+    /* Action Cards */
+    .action-card {
+        border: none;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        height: 100%;
+        text-decoration: none;
+        color: inherit;
+        position: relative;
+        overflow: hidden;
+    }
+    .action-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--primary-gradient);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.4s ease;
+    }
+    .action-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--card-shadow-hover);
+        color: inherit;
+        text-decoration: none;
+    }
+    .action-card:hover::before {
+        transform: scaleX(1);
+    }
+    .action-card .action-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 14px;
+        transition: var(--transition);
+    }
+    .action-card:hover .action-icon {
+        transform: scale(1.1) rotate(-5deg);
+    }
+    .icon-primary { background: rgba(102, 126, 234, 0.12); color: #667eea; }
+    .icon-success { background: rgba(17, 153, 142, 0.12); color: #11998e; }
+    .icon-warning { background: rgba(247, 151, 30, 0.12); color: #f7971e; }
+    .icon-info    { background: rgba(33, 147, 176, 0.12); color: #2193b0; }
+
+    /* Cards */
+    .content-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: var(--card-shadow);
+    }
+    .content-card .card-header {
+        background: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 16px 16px 0 0 !important;
+        padding: 18px 22px;
+    }
+    .content-card .card-header .card-title {
+        font-weight: 600;
+        color: #2d3748;
+    }
+
+    /* Recent list */
+    .recent-item {
+        border: none !important;
+        border-radius: 12px !important;
+        padding: 14px 16px !important;
+        margin-bottom: 8px;
+        background: #f8f9fc;
+        transition: var(--transition);
+    }
+    .recent-item:hover {
+        background: #eef1f8;
+        transform: translateX(4px);
+    }
+    .recent-item .course-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 8px;
+    }
+
+    /* Table */
+    .table-hover tbody tr {
+        transition: var(--transition);
+    }
+    .table-hover tbody tr:hover {
+        background: #f8f9fc;
+        transform: scale(1.005);
+    }
+    .table thead th {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        color: #8a94a6;
+        font-weight: 600;
+        border-bottom: 2px solid #f1f3f9;
+        padding: 14px 16px;
+    }
+    .table tbody td {
+        padding: 16px;
+        vertical-align: middle;
+        border-color: #f1f3f9;
+    }
+
+    /* Status Badges */
+    .badge-status {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .badge-status::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+    .badge-ongoing {
+        background: rgba(17, 153, 142, 0.12);
+        color: #11998e;
+    }
+    .badge-ongoing::before {
+        animation: pulse 1.5s infinite;
+    }
+    .badge-upcoming {
+        background: rgba(102, 126, 234, 0.12);
+        color: #667eea;
+    }
+    .badge-completed {
+        background: rgba(138, 148, 166, 0.15);
+        color: #8a94a6;
+    }
+    .badge-present {
+        background: rgba(17, 153, 142, 0.12);
+        color: #11998e;
+    }
+    .badge-absent {
+        background: rgba(235, 51, 73, 0.12);
+        color: #eb3349;
+    }
+    .badge-late {
+        background: rgba(247, 151, 30, 0.12);
+        color: #f7971e;
+    }
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+
+    /* Empty State */
+    .empty-state {
+        padding: 50px 20px;
+        text-align: center;
+    }
+    .empty-state .icon-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #f1f3f9;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: #b0b7c3;
+        margin-bottom: 16px;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-in {
+        animation: fadeInUp 0.6s ease backwards;
+    }
+    .animate-in:nth-child(1) { animation-delay: 0.05s; }
+    .animate-in:nth-child(2) { animation-delay: 0.15s; }
+    .animate-in:nth-child(3) { animation-delay: 0.25s; }
+
+    .btn-mark {
+        border-radius: 10px;
+        padding: 7px 16px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: var(--transition);
+    }
+    .btn-mark:hover {
+        transform: scale(1.05);
+    }
+
+    @media (max-width: 768px) {
+        .welcome-banner .greeting { font-size: 1.3rem; }
+        .welcome-banner .live-clock { font-size: 1.1rem; }
+    }
+</style>
+
+<!-- Welcome Banner -->
+<div class="welcome-banner animate-in d-flex flex-wrap justify-content-between align-items-center gap-3">
+    <div>
+        <div class="greeting" id="greeting">Welcome back!</div>
+        <div class="date-info" id="dateInfo">Loading date...</div>
     </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card absent">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-muted">Today's Absent</h6>
-                        <h3 class="fw-bold">{{ absent_percentage }}%</h3>
-                        <p class="mb-0"><span class="text-danger">-1.2%</span> from yesterday</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-user-times fa-3x text-danger"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-muted">Total Classes</h6>
-                        <h3 class="fw-bold">{{ total_classes }}</h3>
-                        <p class="mb-0">This semester</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-calendar-alt fa-3x text-primary"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card stat-card">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-muted">Attendance Rate</h6>
-                        <h3 class="fw-bold">{{ present_percentage }}%</h3>
-                        <p class="mb-0">Overall performance</p>
-                    </div>
-                    <div class="align-self-center">
-                        <i class="fas fa-chart-line fa-3x text-warning"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="live-clock" id="liveClock">--:--:--</div>
 </div>
-{% if user.user_type == 'teacher' %}
-<div class="row">
-    <!-- Quick Actions -->
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Quick Actions</h5>
+
+<!-- Student Stats -->
+<div class="row g-4 mb-4">
+    {% if user.user_type == 'student' %}
+
+    <div class="col-lg-4 col-md-6 mb-4 animate-in">
+        <div class="card stat-card present h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h6 class="text-muted mb-1">Today's Present</h6>
+                        <div class="stat-value text-success">{{ present_percentage }}%</div>
+                    </div>
+                    <div class="icon-wrap">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-success" role="progressbar"
+                         style="width: {{ present_percentage }}%"></div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4 mb-3">
-                        <a href="{% url 'attendance:mark_Attendance' %}" class="card action-card text-center py-4">
-                            <div class="card-body">
-                                <i class="fas fa-camera fa-2x mb-3 text-primary"></i>
-                                <h6>Mark Attendance</h6>
-                                <small class="text-muted">Use face recognition</small>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6 mb-4 animate-in">
+        <div class="card stat-card absent h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h6 class="text-muted mb-1">Today's Absent</h6>
+                        <div class="stat-value text-danger">{{ absent_percentage }}%</div>
+                    </div>
+                    <div class="icon-wrap">
+                        <i class="fas fa-user-times"></i>
+                    </div>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar bg-danger" role="progressbar"
+                         style="width: {{ absent_percentage }}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6 mb-4 animate-in">
+        <div class="card stat-card rate h-100">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Attendance Rate</h6>
+                        <div class="stat-value text-info">{{ present_percentage }}%</div>
+                        <small class="text-muted">Overall performance</small>
+                    </div>
+                    <div class="circular-progress">
+                        <svg width="110" height="110">
+                            <circle class="track" cx="55" cy="55" r="48" fill="none" stroke-width="8"></circle>
+                            <circle class="indicator" cx="55" cy="55" r="48" fill="none" stroke-width="8"
+                                    stroke="#2193b0"
+                                    stroke-dasharray="301.6"
+                                    stroke-dashoffset="301.6"
+                                    id="rateCircle"></circle>
+                        </svg>
+                        <div class="value text-info" id="rateValue">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+
+{% if user.user_type == 'teacher' %}
+<div class="row g-4 mb-4">
+    <!-- Quick Actions -->
+    <div class="col-lg-8 mb-4 animate-in">
+        <div class="card content-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="fas fa-bolt me-2 text-warning"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="{% url 'attendance:mark_Attendance' %}" class="action-card p-4 text-center d-block">
+                            <div class="action-icon icon-primary mx-auto">
+                                <i class="fas fa-camera"></i>
                             </div>
+                            <h6 class="fw-bold mb-1">Mark Attendance</h6>
+                            <small class="text-muted">Use face recognition</small>
                         </a>
                     </div>
-                    
-                    <div class="col-md-4 mb-3">
-                        <a href="{% url 'attendance:view_Attendance' %}" class="card action-card text-center py-4">
-                            <div class="card-body">
-                                <i class="fas fa-clipboard-list fa-2x mb-3 text-success"></i>
-                                <h6>View Attendance</h6>
-                                <small class="text-muted">Check records</small>
+
+                    <div class="col-md-4">
+                        <a href="{% url 'attendance:view_Attendance' %}" class="action-card p-4 text-center d-block">
+                            <div class="action-icon icon-success mx-auto">
+                                <i class="fas fa-clipboard-list"></i>
                             </div>
+                            <h6 class="fw-bold mb-1">View Attendance</h6>
+                            <small class="text-muted">Check records</small>
                         </a>
                     </div>
-                    
+
                     {% if not user.is_face_registered %}
-                    <div class="col-md-4 mb-3">
-                        <a href="{% url 'face_app:register_face' %}" class="card action-card text-center py-4">
-                            <div class="card-body">
-                                <i class="fas fa-user-plus fa-2x mb-3 text-warning"></i>
-                                <h6>Register Face</h6>
-                                <small class="text-muted">Required for attendance</small>
+                    <div class="col-md-4">
+                        <a href="{% url 'face_app:register_face' %}" class="action-card p-4 text-center d-block">
+                            <div class="action-icon icon-warning mx-auto">
+                                <i class="fas fa-user-plus"></i>
                             </div>
+                            <h6 class="fw-bold mb-1">Register Face</h6>
+                            <small class="text-muted">Required for attendance</small>
                         </a>
                     </div>
                     {% else %}
-                    <div class="col-md-4 mb-3">
-                        <a href="/attendance/reports/daily/" class="card action-card text-center py-4">
-                            <div class="card-body">
-                                <i class="fas fa-chart-bar fa-2x mb-3 text-info"></i>
-                                <h6>Reports</h6>
-                                <small class="text-muted">View analytics</small>
+                    <div class="col-md-4">
+                        <a href="/attendance/reports/daily/" class="action-card p-4 text-center d-block">
+                            <div class="action-icon icon-info mx-auto">
+                                <i class="fas fa-chart-bar"></i>
                             </div>
+                            <h6 class="fw-bold mb-1">Reports</h6>
+                            <small class="text-muted">View analytics</small>
                         </a>
                     </div>
                     {% endif %}
@@ -134,29 +493,35 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Recent Attendance -->
-    <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Recent Attendance</h5>
+    <div class="col-lg-4 mb-4 animate-in">
+        <div class="card content-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="fas fa-history me-2 text-primary"></i>Recent Attendance</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-3">
                 <div class="list-group list-group-flush">
                     {% for record in recent_attendance %}
-                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div class="list-group-item recent-item d-flex justify-content-between align-items-center">
                         <div>
-                            <h6 class="mb-0">{{ record.course.course_code }}</h6>
-                            <small class="text-muted">{{ record.date }} • {{ record.time_in|time:"H:i" }}</small>
+                            <h6 class="mb-0 fw-bold">
+                                <span class="course-dot bg-{% if record.status == 'present' %}success{% elif record.status == 'absent' %}danger{% else %}warning{% endif %}"></span>
+                                {{ record.course.course_code }}
+                            </h6>
+                            <small class="text-muted">
+                                <i class="far fa-calendar me-1"></i>{{ record.date }}
+                                <i class="far fa-clock ms-2 me-1"></i>{{ record.time_in|time:"H:i" }}
+                            </small>
                         </div>
-                        <span class="badge bg-{% if record.status == 'present' %}success{% elif record.status == 'absent' %}danger{% else %}warning{% endif %}">
+                        <span class="badge-status badge-{{ record.status }}">
                             {{ record.status|title }}
                         </span>
                     </div>
                     {% empty %}
-                    <div class="text-center py-3">
-                        <i class="fas fa-clock fa-2x text-muted mb-2"></i>
-                        <p class="text-muted">No attendance records yet</p>
+                    <div class="empty-state">
+                        <div class="icon-circle"><i class="fas fa-clock"></i></div>
+                        <p class="text-muted mb-0">No attendance records yet</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -164,18 +529,19 @@
         </div>
     </div>
 </div>
-
 {% endif %}
-<div class="row">
-    <!-- Upcoming Classes -->
+
+<!-- Upcoming Classes -->
+<div class="row animate-in">
     <div class="col-lg-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Upcoming Classes Today</h5>
+        <div class="card content-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0"><i class="fas fa-calendar-day me-2 text-success"></i>Upcoming Classes Today</h5>
+                <span class="badge bg-light text-dark" id="classCount">{{ today_classes|length }} class(es)</span>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover mb-0" id="classesTable">
                         <thead>
                             <tr>
                                 <th>Course</th>
@@ -183,74 +549,62 @@
                                 <th>Room</th>
                                 <th>Instructor</th>
                                 <th>Status</th>
-                                <th>Action</th>
+                                <th class="text-end">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-
                             {% for schedule in today_classes %}
-
-                            <tr>
-
+                            <tr data-start="{{ schedule.start_time|time:'H:i' }}"
+                                data-end="{{ schedule.end_time|time:'H:i' }}">
                                 <td>
-                                    <strong>{{ schedule.course.course_code }}</strong><br>
-                                    <small>{{ schedule.course.course_name }}</small>
+                                    <div class="d-flex align-items-center">
+                                        <div class="action-icon icon-primary me-3"
+                                             style="width:42px;height:42px;font-size:0.9rem;font-weight:700;">
+                                            {{ schedule.course.course_code|slice:":3" }}
+                                        </div>
+                                        <div>
+                                            <strong>{{ schedule.course.course_code }}</strong><br>
+                                            <small class="text-muted">{{ schedule.course.course_name }}</small>
+                                        </div>
+                                    </div>
                                 </td>
-
                                 <td>
+                                    <i class="far fa-clock me-1 text-muted"></i>
                                     {{ schedule.start_time|time:"h:i A" }} - {{ schedule.end_time|time:"h:i A" }}
                                 </td>
-
                                 <td>
+                                    <i class="fas fa-door-open me-1 text-muted"></i>
                                     {{ schedule.room }}
                                 </td>
-
                                 <td>
                                     {% if schedule.course.teacher %}
                                         {{ schedule.course.teacher.get_full_name }}
                                     {% else %}
-                                        Not Assigned
+                                        <span class="text-muted">Not Assigned</span>
                                     {% endif %}
                                 </td>
-
                                 <td>
-
-                                    {% now "H:i" as current_time %}
-
-                                    <span class="badge bg-success">
+                                    <span class="badge-status badge-upcoming status-badge">
                                         Scheduled
                                     </span>
-
                                 </td>
-
-                                <td>
-
+                                <td class="text-end">
                                     <a href="{% url 'attendance:mark_Attendance' %}"
-                                       class="btn btn-sm btn-primary">
-
-                                        <i class="fas fa-camera me-1"></i>
-                                        Mark
-
+                                       class="btn btn-primary btn-mark">
+                                        <i class="fas fa-camera me-1"></i> Mark
                                     </a>
-
                                 </td>
-
                             </tr>
-
                             {% empty %}
-
                             <tr>
-
-                                <td colspan="6" class="text-center">
-
-                                    No classes scheduled today
-
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <div class="icon-circle"><i class="fas fa-calendar-times"></i></div>
+                                        <p class="text-muted mb-0">No classes scheduled today</p>
+                                    </div>
                                 </td>
-
                             </tr>
-
                             {% endfor %}
-
                         </tbody>
                     </table>
                 </div>
@@ -258,4 +612,95 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Live Clock + Greeting
+    function updateClock() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        document.getElementById('liveClock').textContent = `${hh}:${mm}:${ss}`;
+
+        const hour = now.getHours();
+        let greeting = 'Welcome back!';
+        if (hour < 12) greeting = 'Good morning!';
+        else if (hour < 17) greeting = 'Good afternoon!';
+        else greeting = 'Good evening!';
+        const name = "{{ user.get_full_name|default:'' }}".trim();
+        document.getElementById('greeting').textContent = name ? `${greeting}, ${name.split(' ')[0]}!` : greeting;
+
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        document.getElementById('dateInfo').textContent = now.toLocaleDateString('en-US', options);
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    // Circular Progress Animation (student attendance rate)
+    const rateValue = {{ present_percentage|default:0 }};
+    const circle = document.getElementById('rateCircle');
+    const rateText = document.getElementById('rateValue');
+    if (circle) {
+        const radius = 48;
+        const circumference = 2 * Math.PI * radius;
+        circle.style.strokeDasharray = circumference;
+        const offset = circumference - (rateValue / 100) * circumference;
+        setTimeout(() => {
+            circle.style.strokeDashoffset = offset;
+            // count up
+            let count = 0;
+            const step = rateValue / 40;
+            const timer = setInterval(() => {
+                count += step;
+                if (count >= rateValue) {
+                    count = rateValue;
+                    clearInterval(timer);
+                }
+                rateText.textContent = Math.round(count) + '%';
+            }, 30);
+        }, 300);
+    }
+
+    // Dynamic class status (Ongoing / Upcoming / Completed) based on current time
+    function updateClassStatus() {
+        const rows = document.querySelectorAll('#classesTable tbody tr[data-start]');
+        const now = new Date();
+        const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+        rows.forEach(row => {
+            const start = row.dataset.start;
+            const end = row.dataset.end;
+            if (!start || !end) return;
+
+            const [sh, sm] = start.split(':').map(Number);
+            const [eh, em] = end.split(':').map(Number);
+            const startMin = sh * 60 + sm;
+            const endMin = eh * 60 + em;
+
+            const badge = row.querySelector('.status-badge');
+            if (!badge) return;
+
+            badge.classList.remove('badge-ongoing', 'badge-upcoming', 'badge-completed');
+
+            if (currentMinutes >= startMin && currentMinutes <= endMin) {
+                badge.classList.add('badge-ongoing');
+                badge.textContent = 'Ongoing';
+            } else if (currentMinutes < startMin) {
+                badge.classList.add('badge-upcoming');
+                badge.textContent = 'Upcoming';
+            } else {
+                badge.classList.add('badge-completed');
+                badge.textContent = 'Completed';
+                const btn = row.querySelector('.btn-mark');
+                if (btn) {
+                    btn.classList.add('disabled');
+                    btn.style.opacity = '0.6';
+                }
+            }
+        });
+    }
+    updateClassStatus();
+    setInterval(updateClassStatus, 30000); // refresh every 30 sec
+</script>
+
 {% endblock %}

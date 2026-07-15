@@ -1,149 +1,470 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}User Profile - {{ user.username }}{% endblock %}
+{% block title %}User Profile - {{ user.get_full_name|default:user.username }}{% endblock %}
+
+{% block page_title %}My Profile & Account Settings{% endblock %}
+
+{% block breadcrumb %}
+    <li class="breadcrumb-item active" aria-current="page">Profile</li>
+{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <!-- Profile Information Section -->
-        <div class="col-md-4">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <img src="{% static 'images/default-avatar.png' %}" alt="Profile Picture" class="rounded-circle mb-3" width="150" height="150">
-                    <h4>{{ user.get_full_name|default:user.username }}</h4>
-                    <p class="text-muted">{{ user.email }}</p>
-                    <hr>
-                    <div class="text-start">
-                        <p><strong>Username:</strong> {{ user.username }}</p>
-                        <p><strong>Date Joined:</strong> {{ user.date_joined|date:"M d, Y" }}</p>
-                        <p><strong>Last Login:</strong> {{ user.last_login|date:"M d, Y H:i" }}</p>
-                    </div>
-                    <a href="{% url 'profile' %}" class="btn btn-primary btn-block mt-3">Edit Profile</a>
+<style>
+    /* Profile ID Card */
+    .profile-id-card {
+        border: none;
+        border-radius: 20px;
+        box-shadow: var(--card-shadow);
+        background: #ffffff;
+        overflow: hidden;
+        transition: var(--transition);
+    }
+    .profile-id-card:hover {
+        box-shadow: var(--card-shadow-hover);
+        transform: translateY(-4px);
+    }
+    .profile-banner {
+        height: 120px;
+        background: var(--primary-gradient);
+        position: relative;
+    }
+    .profile-avatar-container {
+        margin-top: -65px;
+        text-align: center;
+        position: relative;
+    }
+    .profile-avatar-img {
+        width: 130px;
+        height: 130px;
+        object-fit: cover;
+        border: 4px solid #ffffff;
+        border-radius: 50%;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        background-color: #f8f9fa;
+    }
+    .profile-metadata-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .profile-metadata-list li {
+        display: flex;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px dashed #e2e8f0;
+        font-size: 0.92rem;
+        color: #4a5568;
+    }
+    .profile-metadata-list li:last-child {
+        border-bottom: none;
+    }
+    .profile-metadata-list li i {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        font-size: 0.9rem;
+    }
+
+    /* Custom Tabs */
+    .nav-tabs-custom {
+        border-bottom: 2px solid #e2e8f0;
+        gap: 8px;
+        padding: 0 16px;
+    }
+    .nav-tabs-custom .nav-link {
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-weight: 600;
+        padding: 14px 20px;
+        border-radius: 12px 12px 0 0;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .nav-tabs-custom .nav-link:hover {
+        color: #1e293b;
+        background: #f8fafc;
+    }
+    .nav-tabs-custom .nav-link.active {
+        color: #667eea;
+        background: #ffffff;
+        border-bottom: 3px solid #667eea;
+        margin-bottom: -2px;
+    }
+
+    /* Form Controls Styling */
+    #settings input[type="text"],
+    #settings input[type="email"],
+    #settings input[type="file"],
+    #settings select,
+    #settings textarea {
+        display: block;
+        width: 100%;
+        padding: 0.7rem 1rem;
+        font-size: 0.92rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #334155;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        transition: var(--transition);
+    }
+    #settings input:focus,
+    #settings select:focus,
+    #settings textarea:focus {
+        border-color: #667eea;
+        outline: 0;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+    }
+    #settings label {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #475569;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    /* Face Card */
+    .face-item-card {
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        transition: var(--transition);
+    }
+    .face-item-card:hover {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        transform: translateY(-3px);
+    }
+    .face-item-img {
+        height: 180px;
+        width: 100%;
+        object-fit: cover;
+        background: #f1f5f9;
+    }
+</style>
+
+<div class="row g-4">
+    <!-- Left Column: User Identity Card -->
+    <div class="col-lg-4">
+        <div class="profile-id-card">
+            <div class="profile-banner"></div>
+            <div class="profile-avatar-container">
+                <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=667eea&color=fff&size=256{% endif %}" 
+                     alt="Profile Picture" 
+                     class="profile-avatar-img">
+                <div class="mt-3 px-3">
+                    <h4 class="fw-bold mb-0 text-dark">{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted small mb-2">@{{ user.username }}</p>
+                    <span class="badge bg-primary px-3 py-1 rounded-pill text-uppercase shadow-sm" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                        {{ user.get_user_type_display }}
+                    </span>
                 </div>
             </div>
-        </div>
 
-        <!-- Tabs Section -->
-        <div class="col-md-8">
-            <div class="card shadow-sm">
-                <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button" role="tab">Attendance History</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="faces-tab" data-bs-toggle="tab" data-bs-target="#faces" type="button" role="tab">Registered Faces</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="recognition-tab" data-bs-toggle="tab" data-bs-target="#recognition" type="button" role="tab">Recognition Logs</button>
-                        </li>
-                    </ul>
+            <div class="card-body p-4">
+                <div class="mb-4 text-center">
+                    <small class="text-muted d-block mb-1 text-uppercase fw-semibold" style="font-size: 0.72rem;">Biometric Security Status</small>
+                    {% if user.is_face_registered %}
+                    <span class="badge bg-success px-3 py-2 rounded-pill shadow-sm w-100">
+                        <i class="fas fa-check-circle me-1"></i> Face Registered & Verified
+                    </span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark px-3 py-2 rounded-pill shadow-sm w-100">
+                        <i class="fas fa-exclamation-triangle me-1"></i> Not Registered
+                    </span>
+                    {% endif %}
                 </div>
-                <div class="card-body">
-                    <div class="tab-content" id="profileTabsContent">
-                        <!-- Attendance History Tab -->
-                        <div class="tab-pane fade show active" id="attendance" role="tabpanel">
-                            <h5>Recent Attendance Records</h5>
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Check In</th>
-                                            <th>Check Out</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% if attendance_records %}
-                                            {% for record in attendance_records %}
-                                            <tr>
-                                                <td>{{ record.date|date:"M d, Y" }}</td>
-                                                <td>{{ record.check_in|time:"H:i"|default:"-" }}</td>
-                                                <td>{{ record.check_out|time:"H:i"|default:"-" }}</td>
-                                                <td>
-                                                    <span class="badge bg-{{ record.status_color }}">{{ record.status }}</span>
-                                                </td>
-                                            </tr>
-                                            {% endfor %}
-                                        {% else %}
-                                            <tr>
-                                                <td colspan="4" class="text-center text-muted">No attendance records found</td>
-                                            </tr>
-                                        {% endif %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
 
-                        <!-- Registered Faces Tab -->
-                        <div class="tab-pane fade" id="faces" role="tabpanel">
-                            <h5>Your Registered Face Images</h5>
-                            <div class="row">
-                                {% if face_images %}
-                                    {% for face in face_images %}
-                                    <div class="col-md-4 mb-3">
-                                        <div class="card">
-                                            <img src="{{ face.image.url }}" class="card-img-top" alt="Face Image">
-                                            <div class="card-body">
-                                                <p class="card-text small text-muted">
-                                                    Uploaded: {{ face.created_at|date:"M d, Y" }}
-                                                    {% if face.is_primary %}
-                                                        <span class="badge bg-success">Primary</span>
-                                                    {% endif %}
-                                                </p>
-                                                <button class="btn btn-sm btn-danger" onclick="deleteFace('{{ face.id }}')">Delete</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {% endfor %}
-                                {% else %}
-                                    <div class="col-12">
-                                        <p class="text-center text-muted">No face images registered</p>
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <a href="{% url 'face_app:upload_face' %}" class="btn btn-success mt-3">Upload New Face</a>
-                        </div>
+                <hr class="border-secondary border-opacity-10">
 
-                        <!-- Recognition Logs Tab -->
-                        <div class="tab-pane fade" id="recognition" role="tabpanel">
-                            <h5>Recent Recognition Attempts</h5>
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
-                                    <thead>
+                <ul class="profile-metadata-list">
+                    <li>
+                        <i class="fas fa-envelope text-primary"></i>
+                        <span class="text-truncate" title="{{ user.email }}">{{ user.email|default:"No email set" }}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-phone text-success"></i>
+                        <span>{{ user.phone|default:"Phone not provided" }}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-building text-info"></i>
+                        <span>{{ user.department|default:"General Department" }}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-calendar-alt text-warning"></i>
+                        <span>Joined: {{ user.date_joined|date:"M d, Y" }}</span>
+                    </li>
+                    {% if user.user_type == 'student' and user.student_id %}
+                    <li>
+                        <i class="fas fa-id-card text-danger"></i>
+                        <span>ID: <strong>{{ user.student_id }}</strong></span>
+                    </li>
+                    {% elif user.user_type == 'teacher' and user.employee_id %}
+                    <li>
+                        <i class="fas fa-id-badge text-danger"></i>
+                        <span>ID: <strong>{{ user.employee_id }}</strong></span>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <button class="btn btn-primary w-100 mt-4 py-2 shadow-sm" onclick="switchTab('#settings-tab')">
+                    <i class="fas fa-user-edit me-2"></i> Edit Profile & Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Navigation Tabs & Content -->
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+            <div class="card-header bg-white p-0 pt-3 border-bottom border-light">
+                <ul class="nav nav-tabs nav-tabs-custom" id="profileTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="attendance-tab" data-bs-toggle="tab" data-bs-target="#attendance" type="button" role="tab" aria-selected="true">
+                            <i class="fas fa-calendar-check text-primary"></i> Attendance History
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="faces-tab" data-bs-toggle="tab" data-bs-target="#faces" type="button" role="tab" aria-selected="false">
+                            <i class="fas fa-camera text-success"></i> Registered Faces
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="recognition-tab" data-bs-toggle="tab" data-bs-target="#recognition" type="button" role="tab" aria-selected="false">
+                            <i class="fas fa-shield-alt text-info"></i> Recognition Logs
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="settings-tab" data-bs-toggle="tab" data-bs-target="#settings" type="button" role="tab" aria-selected="false">
+                            <i class="fas fa-cog text-warning"></i> Account Settings
+                        </button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body p-4">
+                <div class="tab-content" id="profileTabsContent">
+                    
+                    <!-- 1. ATTENDANCE HISTORY TAB -->
+                    <div class="tab-pane fade show active" id="attendance" role="tabpanel" aria-labelledby="attendance-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-history me-2 text-primary"></i>Recent Check-Ins</h5>
+                            <span class="badge bg-light text-dark border px-3 py-2">Last 10 Records</span>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="py-3">Date</th>
+                                        <th class="py-3">Check In</th>
+                                        <th class="py-3">Check Out</th>
+                                        <th class="py-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if attendance_records %}
+                                        {% for record in attendance_records %}
                                         <tr>
-                                            <th>Timestamp</th>
-                                            <th>Status</th>
-                                            <th>Confidence</th>
-                                            <th>IP Address</th>
+                                            <td class="fw-medium">{{ record.date|date:"M d, Y" }}</td>
+                                            <td><i class="far fa-clock me-1 text-muted"></i>{{ record.check_in|time:"H:i"|default:"-" }}</td>
+                                            <td><i class="far fa-clock me-1 text-muted"></i>{{ record.check_out|time:"H:i"|default:"-" }}</td>
+                                            <td>
+                                                <span class="badge badge-{{ record.status|lower }} px-3 py-1 rounded-pill">
+                                                    {{ record.status|title }}
+                                                </span>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% if recognition_logs %}
-                                            {% for log in recognition_logs %}
-                                            <tr>
-                                                <td>{{ log.timestamp|date:"M d, Y H:i:s" }}</td>
-                                                <td>
-                                                    <span class="badge bg-{% if log.status == 'SUCCESS' %}success{% else %}danger{% endif %}">
-                                                        {{ log.get_status_display }}
-                                                    </span>
-                                                </td>
-                                                <td>{{ log.confidence|floatformat:2|default:"-" }}%</td>
-                                                <td>{{ log.ip_address|default:"-" }}</td>
-                                            </tr>
-                                            {% endfor %}
-                                        {% else %}
-                                            <tr>
-                                                <td colspan="4" class="text-center text-muted">No recognition logs found</td>
-                                            </tr>
-                                        {% endif %}
-                                    </tbody>
-                                </table>
-                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">
+                                                <div class="py-3">
+                                                    <i class="fas fa-clipboard-list fa-3x text-light mb-3"></i>
+                                                    <p class="mb-0 fw-medium">No attendance records logged yet.</p>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
+
+                    <!-- 2. REGISTERED FACES TAB -->
+                    <div class="tab-pane fade" id="faces" role="tabpanel" aria-labelledby="faces-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-id-badge me-2 text-success"></i>Biometric Templates</h5>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'face_app:register_face' %}" class="btn btn-sm btn-primary shadow-sm">
+                                    <i class="fas fa-camera me-1"></i> Register via Camera
+                                </a>
+                                <a href="{% url 'face_app:upload_face' %}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-upload me-1"></i> Upload Image
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            {% if face_images %}
+                                {% for face in face_images %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="face-item-card bg-white shadow-sm">
+                                        <img src="{{ face.image.url }}" class="face-item-img" alt="Face Capture">
+                                        <div class="p-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <small class="text-muted"><i class="far fa-calendar me-1"></i>{{ face.created_at|date:"M d, Y" }}</small>
+                                                {% if face.is_primary %}
+                                                    <span class="badge bg-success">Primary</span>
+                                                {% endif %}
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger w-100 mt-1" onclick="deleteFace('{{ face.id }}')">
+                                                <i class="fas fa-trash-alt me-1"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="col-12 text-center py-5">
+                                    <div class="p-4 bg-light rounded-4 border border-dashed">
+                                        <i class="fas fa-user-shield fa-3x text-muted mb-3"></i>
+                                        <h6 class="fw-bold">No Facial Biometrics Registered</h6>
+                                        <p class="text-muted small mb-3">Register your face to enable touchless automatic attendance scanning.</p>
+                                        <a href="{% url 'face_app:register_face' %}" class="btn btn-primary px-4 py-2">
+                                            <i class="fas fa-camera me-2"></i> Register Now
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- 3. RECOGNITION LOGS TAB -->
+                    <div class="tab-pane fade" id="recognition" role="tabpanel" aria-labelledby="recognition-tab">
+                        <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-shield-alt me-2 text-info"></i>Security & Recognition Audit Log</h5>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="py-3">Timestamp</th>
+                                        <th class="py-3">Match Status</th>
+                                        <th class="py-3">Confidence Score</th>
+                                        <th class="py-3">IP Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if recognition_logs %}
+                                        {% for log in recognition_logs %}
+                                        <tr>
+                                            <td class="fw-medium">{{ log.timestamp|date:"M d, Y H:i:s" }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if log.status == 'SUCCESS' %}success{% else %}danger{% endif %} px-3 py-1 rounded-pill">
+                                                    {{ log.get_status_display }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                {% if log.confidence %}
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <div class="progress flex-grow-1" style="height: 6px; width: 60px;">
+                                                            <div class="progress-bar bg-info" style="width: {{ log.confidence|floatformat:0 }}%"></div>
+                                                        </div>
+                                                        <span class="small fw-semibold">{{ log.confidence|floatformat:2 }}%</span>
+                                                    </div>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-muted font-monospace small">{{ log.ip_address|default:"localhost" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">
+                                                <i class="fas fa-shield-virus fa-3x text-light mb-3"></i>
+                                                <p class="mb-0 fw-medium">No biometric recognition logs recorded yet.</p>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 4. ACCOUNT SETTINGS (EDIT PROFILE) TAB -->
+                    <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-user-cog me-2 text-warning"></i>Edit Profile Details</h5>
+                            <span class="badge bg-light text-muted border">Account ID #{{ user.id }}</span>
+                        </div>
+
+                        <form method="POST" enctype="multipart/form-data" class="row g-3">
+                            {% csrf_token %}
+                            
+                            <!-- Profile Picture Upload -->
+                            <div class="col-12 bg-light p-4 rounded-4 mb-3 border">
+                                <label class="form-label d-block mb-2 text-dark"><i class="fas fa-camera me-2 text-primary"></i>Update Profile Picture</label>
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}https://ui-avatars.com/api/?name={{ user.username }}&background=667eea&color=fff{% endif %}" 
+                                         class="rounded-circle border shadow-sm" width="64" height="64" alt="Avatar">
+                                    <div class="flex-grow-1">
+                                        {{ p_form.profile_picture }}
+                                        <small class="text-muted d-block mt-1">Recommended: Square PNG or JPG under 2MB.</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Personal Info Fields -->
+                            <div class="col-md-6">
+                                <label class="form-label">Username</label>
+                                {{ u_form.username }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email Address</label>
+                                {{ u_form.email }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">First Name</label>
+                                {{ u_form.first_name }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name</label>
+                                {{ u_form.last_name }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Phone Number</label>
+                                {{ u_form.phone }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Department / Faculty</label>
+                                {{ u_form.department }}
+                            </div>
+
+                            <div class="col-12 mt-4 pt-3 border-top d-flex gap-3">
+                                <button type="submit" class="btn btn-primary px-5 py-2 fw-semibold shadow-sm">
+                                    <i class="fas fa-save me-2"></i> Save Changes
+                                </button>
+                                <button type="reset" class="btn btn-outline-secondary px-4 py-2">
+                                    <i class="fas fa-undo me-1"></i> Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -151,9 +472,19 @@
 </div>
 
 <script>
+// Function to switch tabs cleanly via button clicks
+function switchTab(tabSelector) {
+    const tabTrigger = document.querySelector(`button[data-bs-target="${tabSelector}"]`);
+    if (tabTrigger) {
+        const tabInstance = new bootstrap.Tab(tabTrigger);
+        tabInstance.show();
+        tabTrigger.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+// Function to delete face image via AJAX
 function deleteFace(faceId) {
-    if (confirm('Are you sure you want to delete this face image?')) {
-        // AJAX call to delete face image
+    if (confirm('Are you sure you want to permanently delete this biometric face capture?')) {
         fetch(`/face/delete/${faceId}/`, {
             method: 'DELETE',
             headers: {
@@ -164,8 +495,11 @@ function deleteFace(faceId) {
             if (response.ok) {
                 location.reload();
             } else {
-                alert('Error deleting face image');
+                alert('Failed to delete face image. Please try again.');
             }
+        })
+        .catch(error => {
+            alert('An error occurred while deleting the face image.');
         });
     }
 }
